@@ -1,3 +1,4 @@
+import {validateReceipts} from './receipts.js';
 import {splitVendorNote} from './vendors.js';
 export const uuid=()=>crypto.randomUUID();
 export const clean=v=>String(v??'').trim().replace(/\s+/g,' ');
@@ -6,6 +7,7 @@ export const label={request:'청구내역',vendor:'업체연락처',approval:'�
 export const number=v=>v===null||v===''||v===undefined?'—':Number(v).toLocaleString('ko-KR',{maximumFractionDigits:5});
 export function validateRecord(kind,d){
  if(kind==='request'){
+  validateReceipts(d);
   if(!['기계','소방'].includes(d.trade))throw Error('기계 또는 소방을 선택하세요.');
   if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')||!Number.isFinite(Date.parse(d.date+'T00:00:00Z'))||new Date(d.date+'T00:00:00Z').toISOString().slice(0,10)!==d.date)throw Error('올바른 청구일을 입력하세요.');
   if(!clean(d.name))throw Error('품명을 입력하세요.');

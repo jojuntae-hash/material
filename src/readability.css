@@ -153,3 +153,71 @@ footer{font-size:11px;color:#6d8394}
  .login-illustration p{font-size:14px}.login-panel .notice{font-size:13px}
  .compare small{font-size:13px}footer{font-size:10px}.toast{font-size:14px}
 }
+
+/* Compact mobile lists; desktop tables keep their full columns. */
+@media(max-width:767px){
+ .table-panel:has(.request-table),.table-panel:has(.contact-table){border:1px solid var(--line);border-radius:9px;background:white;overflow:visible}
+ .request-table tbody{display:block}
+ .request-table tr{grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;padding:10px 12px;min-height:72px;border:0;border-bottom:1px solid var(--line);border-radius:0;align-items:center}
+ .request-table tr:last-child{border-bottom:0}
+ .request-table td{padding:0}
+ .request-table .cell-trade,.request-table .cell-unit,.request-table .cell-manufacturer,.request-table .cell-dealer,.request-table .cell-location,.request-table .cell-applicant,.request-table .cell-note,.request-table .cell-arrow{display:none}
+ .request-table .cell-name{grid-column:1;grid-row:1 / span 2;padding:0;align-self:center;overflow-wrap:anywhere}
+ .request-table .cell-name b{display:block;font-size:15px;line-height:1.45}
+ .request-table .cell-name small{font-size:13px;line-height:1.45;margin-top:3px;overflow-wrap:anywhere}
+ .request-table .cell-date{grid-column:2;grid-row:1;font-size:12px;white-space:nowrap}
+ .request-table .cell-quantity{grid-column:2;grid-row:2;padding:0;font-size:15px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;max-width:125px}
+ .request-table .cell-quantity:before{content:none}
+ .contact-table{display:block;min-width:0;width:100%}
+ .contact-table thead{display:none}
+ .contact-table tbody{display:block}
+ .contact-table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3px 12px;padding:10px 12px;min-height:72px;border-bottom:1px solid var(--line);align-items:start}
+ .contact-table tr:last-child{border-bottom:0}
+ .contact-table td{position:static;padding:0;border:0;min-width:0;max-width:none;font-size:14px;overflow-wrap:anywhere;background:transparent}
+ .contact-table td:nth-child(1),.contact-table td:nth-child(2),.contact-table td:nth-child(6),.contact-table td:nth-child(7),.contact-table td:nth-child(8){display:none}
+ .contact-table td:nth-child(3){grid-column:1;grid-row:1 / span 2;line-height:1.5}
+ .contact-table td:nth-child(4){grid-column:2;grid-row:1;line-height:1.5}
+ .contact-table td:nth-child(5){grid-column:2;grid-row:2;white-space:normal;font-size:13px;line-height:1.5;color:#147e81;font-variant-numeric:tabular-nums}
+ .contact-table td:nth-child(3):before{content:'제조사';display:block;font-size:11px;color:#5f788d;margin-bottom:2px}
+ .contact-table td:nth-child(4):before{content:'대리점 ';font-size:11px;color:#5f788d;font-weight:400}
+ .contact-scroll-hint{margin-bottom:10px;line-height:1.6}
+ .request-table tr:focus-visible,.contact-table tr:focus-visible{outline-offset:-3px}
+}
+@media(max-width:767px){
+ .request-table .cell-name b,.request-table .cell-name small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .request-table .cell-name small .compact-location{font-size:12px;color:#526f85}
+}
+
+.receipt-status{display:inline-block;font-size:11px;color:#617589;margin-left:8px;font-weight:500;white-space:nowrap}
+.receipt-status.complete{color:#147e81}
+.receipt-panel{margin-top:20px;padding:16px;background:#f1f8f7;border:1px solid #d8eae7;border-radius:8px}
+.receipt-panel>p{margin:8px 0 12px}.receipt-history{margin-top:14px}.receipt-history summary{cursor:pointer;min-height:44px;padding:10px 0}
+.receipt-event{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #d8eae7}.receipt-event>div{min-width:0;overflow-wrap:anywhere}.receipt-event p{font-size:12px}.receipt-event b{font-size:14px}
+@media(max-width:767px){.request-table .cell-name{position:relative;padding-right:0}.request-table .cell-name b{padding-right:52px}.request-table .receipt-status{position:absolute;right:0;top:2px;margin:0;font-size:10px;line-height:19px}.receipt-event{align-items:flex-start;flex-wrap:wrap}}
+/* Keep mobile search to two primary rows; date filtering remains in details. */
+.desktop-date-range{display:contents}
+.mobile-date-slot{display:none}
+@media(max-width:767px){
+ .filter-panel{padding:12px}
+ .filter-panel .segmented{margin-bottom:8px}
+ #request-filter .filter-main{display:flex;flex-wrap:nowrap;gap:6px}
+ #request-filter .filter-main .searchbox{flex:1;min-width:0;padding:0 8px;gap:5px}
+ #request-filter .filter-main .searchbox svg{width:15px}
+ #request-filter .filter-main .searchbox input{padding:10px 0;font-size:14px}
+ #request-filter .filter-main .btn{flex:0 0 auto;padding:10px 8px;font-size:12px;min-height:44px}
+ #request-filter .filter-more{margin-top:4px}
+ #request-filter .filter-more summary{min-height:28px;padding-top:5px}
+ .mobile-date-slot{display:block}
+ .mobile-date-slot .desktop-date-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+ .mobile-date-slot input[type=date]{width:100%;min-width:0;font-size:14px}
+ .mobile-date-slot .date-dash{display:none}
+}
+/* Request list heading stays on one line on phones. */
+@media(max-width:767px){
+ .section-heading:has(+.sort-controls){display:flex;flex-wrap:nowrap;align-items:center;gap:8px;margin:16px 0 12px}
+ .section-heading:has(+.sort-controls)>div{min-width:0}
+ .section-heading:has(+.sort-controls) h2{font-size:17px;gap:6px;white-space:nowrap}
+ .section-heading:has(+.sort-controls) p{display:none}
+ .section-heading:has(+.sort-controls) .count{font-size:12px;padding:2px 6px;min-width:0}
+ .section-heading:has(+.sort-controls)>.btn{flex-shrink:0;font-size:12px;padding:9px 10px;min-height:44px}
+}
