@@ -28,6 +28,8 @@ Windows에서는 `.env.example`을 `.env.local`로 복사합니다. 개발 서�
 
 환경변수:
 
+현재 현장 프로젝트의 URL과 **공개 publishable 키**는 `src/public-config.js`에 기본값으로 설정되어 있습니다. 새 기기에서도 별도 키 입력 없이 로그인 화면으로 연결됩니다. 환경변수 또는 설정 화면의 값이 있으면 해당 값이 우선합니다. 공개 키는 브라우저에 공개되는 식별자이며, 데이터 접근은 로그인·현장 권한·RLS 정책으로 제한합니다.
+
 ```ini
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=공개_publishable_또는_anon_키

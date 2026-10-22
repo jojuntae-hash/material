@@ -1,9 +1,10 @@
 import {createClient} from '@supabase/supabase-js';
 import {uuid,validateRecord,sha256} from './core.js';
+import {publicSupabaseConfig} from './public-config.js';
 const DB='material-manager-v1';
 const openDB=()=>new Promise((resolve,reject)=>{const q=indexedDB.open(DB,1);q.onupgradeneeded=()=>{q.result.createObjectStore('state');q.result.createObjectStore('files');};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
 export async function idb(store,key,value){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,value===undefined?'readonly':'readwrite'),os=tx.objectStore(store),q=value===undefined?os.get(key):os.put(value,key);let result;q.onsuccess=()=>{result=q.result;};tx.oncomplete=()=>{db.close();resolve(result);};tx.onerror=()=>{db.close();reject(tx.error);};});}
-export const config=()=>({url:localStorage.getItem('mm-url')||import.meta.env.VITE_SUPABASE_URL||'',key:localStorage.getItem('mm-key')||import.meta.env.VITE_SUPABASE_ANON_KEY||''});
+export const config=()=>({url:localStorage.getItem('mm-url')||import.meta.env.VITE_SUPABASE_URL||publicSupabaseConfig.url,key:localStorage.getItem('mm-key')||import.meta.env.VITE_SUPABASE_ANON_KEY||publicSupabaseConfig.key});
 export class Store{
  constructor(){this.records=[];this.history=[];this.mode='local';this.role='admin';this.projectName='파주 콘텐츠시티';this.projectId='local';this.files=[];}
  async init(){
