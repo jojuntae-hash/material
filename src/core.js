@@ -27,6 +27,8 @@ export function validateRecord(kind,d){
  }
  if(kind==='alias'&&(!clean(d.alias)||!d.vendorId))throw Error('별칭과 연결 업체를 선택하세요.');
 }
+export const searchKey=value=>String(value??'').replace(/\s+/gu,'').toLowerCase();
+export const matchesSearch=(value,query)=>searchKey(value).includes(searchKey(query));
 export const fingerprint=d=>[d.trade,d.date,clean(d.name),clean(d.spec),clean(d.unit),String(Number(d.quantity))].join('|');
 export function resolveVendors(note,records){
  return splitVendorNote(note,records);
@@ -44,6 +46,6 @@ export function approvalStatus(d,records){
 }
 export function filterRequests(records,{q='',trade='',start='',end='',vendor='',applicant='',location='',review=false},all=records){
  const names=new Map(all.filter(r=>r.kind==='vendor').map(r=>[r.id,r.data.name]));
- return records.filter(r=>r.kind==='request'&&!r.deleted).filter(({data:d})=>(!trade||d.trade===trade)&&(!start||d.date>=start)&&(!end||d.date<=end)&&(!vendor||d.manufacturerId===vendor||d.dealerId===vendor)&&(!applicant||clean(d.applicant).includes(applicant))&&(!location||clean(d.location).includes(location))&&(!review||!d.unit||d.quantity===null||!d.manufacturerId||!d.dealerId||d.note?.includes('[확인]'))&&(!q||[d.name,d.spec,d.note,d.location,d.applicant,d.rawManufacturer,d.rawDealer,names.get(d.manufacturerId),names.get(d.dealerId)].join(' ').toLowerCase().includes(q.toLowerCase()))).sort((a,b)=>b.data.date.localeCompare(a.data.date)||a.id.localeCompare(b.id));
+ return records.filter(r=>r.kind==='request'&&!r.deleted).filter(({data:d})=>(!trade||d.trade===trade)&&(!start||d.date>=start)&&(!end||d.date<=end)&&(!vendor||d.manufacturerId===vendor||d.dealerId===vendor)&&(!applicant||matchesSearch(d.applicant,applicant))&&(!location||matchesSearch(d.location,location))&&(!review||!d.unit||d.quantity===null||!d.manufacturerId||!d.dealerId||d.note?.includes('[확인]'))&&(!q||matchesSearch([d.name,d.spec,d.note,d.location,d.applicant,d.rawManufacturer,d.rawDealer,names.get(d.manufacturerId),names.get(d.dealerId)].join(' '),q))).sort((a,b)=>b.data.date.localeCompare(a.data.date)||a.id.localeCompare(b.id));
 }
 export async function sha256(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
