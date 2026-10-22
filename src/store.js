@@ -22,6 +22,10 @@ export class Store{
   const {data,error}=await this.client.from('mm_audit').select('*').eq('project_id',this.projectId).order('created_at',{ascending:false}).limit(500);if(error)throw error;this.history=data||[];this.files=this.records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));
  }
  async persist(){if(this.mode==='local')await idb('state','local',{records:this.records,history:this.history,files:this.files,projectName:this.projectName,role:'admin',projectId:'local'});}
+ async snapshot(){
+  if(this.mode==='cloud'){const {data,error}=await this.client.rpc('mm_snapshot',{p_project:this.projectId});if(error)throw error;return {records:data.records,history:data.history,files:data.records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}))};}
+  const data=await idb('state','local');return data||{records:this.records,history:this.history,files:this.files};
+ }
  async save(kind,id,data,version,reason,action='수정'){
   validateRecord(kind,data);
   const record={id:id||uuid(),kind,data,version:version||0,deleted:false};

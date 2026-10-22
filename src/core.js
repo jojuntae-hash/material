@@ -16,6 +16,7 @@ export function validateRecord(kind,d){
  if(kind==='vendor'){
   if(!clean(d.name))throw Error('업체명을 입력하세요.');
   if(d.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))throw Error('이메일 형식을 확인하세요.');
+  if(d.contacts?.some(c=>c.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)))throw Error('추가 담당자 이메일 형식을 확인하세요.');
  }
  if(kind==='approval'){
   if(!clean(d.name)||!['기계','소방'].includes(d.trade))throw Error('공종과 승인 품목명을 확인하세요.');
@@ -39,7 +40,13 @@ export function resolveVendors(note,records){
 export function approvalStatus(d,records){
  const a=records.find(r=>r.id===d.approvalId&&!r.deleted&&r.kind==='approval');
  if(!a||!d.manufacturerId)return ['연결 미확인','muted'];
- return a.data.options.some(o=>o.vendorId===d.manufacturerId)?['목록 일치','good']:['검토 필요','warn'];
+ const current=a.data.options.some(o=>o.vendorId===d.manufacturerId);
+ if(d.approvalRevision&&d.approvalRevision!==(a.data.revision||1)){
+  const past=a.data.previousRevisions?.find(p=>p.revision===d.approvalRevision);
+  const then=past?.options.some(o=>o.vendorId===d.manufacturerId);
+  return [`당시 v${d.approvalRevision} ${past?(then?'목록 일치':'검토 필요'):'이력 확인 필요'} · 현재 v${a.data.revision||1} ${current?'목록 일치':'검토 필요'}`,then&&current?'good':'warn'];
+ }
+ return current?['목록 일치','good']:['검토 필요','warn'];
 }
 export function filterRequests(records,{q='',trade='',start='',end='',vendor='',applicant='',location='',review=false},all=records){
  const names=new Map(all.filter(r=>r.kind==='vendor').map(r=>[r.id,r.data.name]));

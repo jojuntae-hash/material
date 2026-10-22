@@ -20,5 +20,5 @@ export default defineConfig({
     });
   }}],
   server:{host:'127.0.0.1',port:5173,strictPort:true,fs:{strict:true}},
-  build:{target:'es2022'}
+  build:{target:'es2022',rollupOptions:{output:{manualChunks:{excel:['xlsx'],supabase:['@supabase/supabase-js'],zip:['fflate']}}}}
 });

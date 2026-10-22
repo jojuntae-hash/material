@@ -64,6 +64,12 @@ begin
  if exists(select 1 from public.mm_records a where a.project_id=p_project and a.kind='file' and not a.deleted and split_part(a.data->>'path','/',1)<>p_project::text) then raise exception '다른 현장의 파일 경로는 연결할 수 없습니다.';end if;
 end $$;
 
+create function public.mm_snapshot(p_project uuid) returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
+begin
+ if public.mm_role(p_project) is null then raise exception '현장 조회 권한이 필요합니다.';end if;
+ return jsonb_build_object('records',coalesce((select jsonb_agg(to_jsonb(r)) from public.mm_records r where r.project_id=p_project),'[]'::jsonb),'history',coalesce((select jsonb_agg(to_jsonb(a) order by a.created_at desc) from public.mm_audit a where a.project_id=p_project),'[]'::jsonb));
+end $$;
+
 create function public.mm_create_project(p_name text) returns uuid language plpgsql security definer set search_path=pg_catalog,public as $$
 declare v_id uuid;
 begin
@@ -129,6 +135,6 @@ create policy mm_storage_read on storage.objects for select to authenticated usi
 create policy mm_storage_insert on storage.objects for insert to authenticated with check(bucket_id='mm-files' and exists(select 1 from public.mm_members m where m.user_id=auth.uid() and m.role in ('admin','editor') and m.project_id::text=split_part(name,'/',1)));
 -- 원본 보존: 클라이언트의 파일 덮어쓰기 및 삭제 정책은 추가하지 않습니다.
 
-revoke all on function public.mm_role(uuid),public.mm_validate(text,jsonb),public.mm_check_links(uuid),public.mm_create_project(text),public.mm_set_member(uuid,uuid,text),public.mm_apply(uuid,jsonb,text,text,uuid),public.mm_restore(uuid,jsonb,text,uuid) from public,anon,authenticated;
-grant execute on function public.mm_role(uuid),public.mm_create_project(text),public.mm_set_member(uuid,uuid,text),public.mm_apply(uuid,jsonb,text,text,uuid),public.mm_restore(uuid,jsonb,text,uuid) to authenticated;
+revoke all on function public.mm_role(uuid),public.mm_validate(text,jsonb),public.mm_check_links(uuid),public.mm_snapshot(uuid),public.mm_create_project(text),public.mm_set_member(uuid,uuid,text),public.mm_apply(uuid,jsonb,text,text,uuid),public.mm_restore(uuid,jsonb,text,uuid) from public,anon,authenticated;
+grant execute on function public.mm_role(uuid),public.mm_snapshot(uuid),public.mm_create_project(text),public.mm_set_member(uuid,uuid,text),public.mm_apply(uuid,jsonb,text,text,uuid),public.mm_restore(uuid,jsonb,text,uuid) to authenticated;
 commit;

@@ -32,9 +32,17 @@ test('PostgreSQL 설치·다중현장 격리·수정 이력·조회 권한·충�
  await assert.rejects(()=>apply(project,[{id,kind:'request',data,version:2}]),/편집 권한/);
  await assert.rejects(()=>db.query('update mm_records set deleted=true'),/permission denied/);
  await as(other);assert.equal((await db.query('select * from mm_records')).rows.length,0);assert.equal((await db.query('select * from mm_projects')).rows.length,0);
+ await assert.rejects(()=>db.query('select mm_snapshot($1)',[project]),/조회 권한/);
  await assert.rejects(()=>apply(project,[{id,kind:'request',data,version:2}]),/편집 권한/);
  await as(admin);await assert.rejects(()=>apply(project,[{id:crypto.randomUUID(),kind:'request',data:{...data,manufacturerId:crypto.randomUUID()},version:0}]),/업체 연결/);
+ await assert.rejects(()=>apply(project,[{id:crypto.randomUUID(),kind:'request',data:{...data,quantity:undefined},version:0}]),/수량은 숫자/);
  assert.equal((await db.query('select * from mm_records')).rows.length,1);
  await db.query('select mm_restore($1,$2::jsonb,$3,$4)',[project,JSON.stringify([{id,kind:'request',data,version:1}]),'복원 테스트',crypto.randomUUID()]);assert.equal((await db.query('select data from mm_records where not deleted')).rows[0].data.quantity,100);
+ const snapshot=(await db.query('select mm_snapshot($1) snapshot',[project])).rows[0].snapshot;assert.ok(snapshot.history.length>=4);assert.equal(snapshot.records.length,1);
+ try{
+  const seed=JSON.parse(await fs.readFile(new URL('../private-data/seed.json',import.meta.url),'utf8'));
+  await db.query('select mm_restore($1,$2::jsonb,$3,$4)',[project,JSON.stringify(seed.records),'실제 초기 자료 검증',crypto.randomUUID()]);
+  assert.equal((await db.query("select count(*)::int n from mm_records where kind='request' and not deleted")).rows[0].n,1983);
+ }catch(err){if(err.code!=='ENOENT')throw err;}
  await db.close();
 });

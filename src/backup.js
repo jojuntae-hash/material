@@ -2,9 +2,9 @@ import {zipSync,unzipSync,strToU8,strFromU8} from 'fflate';
 import {sha256,uuid,validateRecord} from './core.js';
 export function download(bytes,name,type='application/octet-stream'){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 export async function buildBackup(store){
- const files={},manifest=[];
- for(const meta of store.files){const bytes=new Uint8Array(await store.getFile(meta));const hash=await sha256(bytes);files[`files/${meta.id}`]=bytes;manifest.push({...meta,hash});}
- const payload={format:'material-manager',version:1,projectName:store.projectName,projectId:store.projectId,createdAt:new Date().toISOString(),records:store.records,history:store.history,files:manifest};
+ const files={},manifest=[];const snapshot=store.snapshot?await store.snapshot():store;
+ for(const meta of snapshot.files){const bytes=new Uint8Array(await store.getFile(meta));const hash=await sha256(bytes);files[`files/${meta.id}`]=bytes;manifest.push({...meta,hash});}
+ const payload={format:'material-manager',version:1,projectName:store.projectName,projectId:store.projectId,createdAt:new Date().toISOString(),records:snapshot.records,history:snapshot.history,files:manifest};
  const json=strToU8(JSON.stringify(payload));files['data.json']=json;files['manifest.json']=strToU8(JSON.stringify({format:'material-manager',version:1,dataHash:await sha256(json),files:manifest.map(f=>({id:f.id,hash:f.hash,size:f.size}))}));
  return zipSync(files,{level:6});
 }
