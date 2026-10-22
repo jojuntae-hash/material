@@ -42,7 +42,7 @@ test('PostgreSQL 설치·다중현장 격리·수정 이력·조회 권한·충�
  try{
   const seed=JSON.parse(await fs.readFile(new URL('../private-data/seed.json',import.meta.url),'utf8'));
   await db.query('select mm_restore($1,$2::jsonb,$3,$4)',[project,JSON.stringify(seed.records),'실제 초기 자료 검증',crypto.randomUUID()]);
-  assert.equal((await db.query("select count(*)::int n from mm_records where kind='request' and not deleted")).rows[0].n,1983);
+  assert.equal((await db.query("select count(*)::int n from mm_records where kind='request' and not deleted")).rows[0].n,seed.records.filter(r=>r.kind==='request'&&!r.deleted).length);
  }catch(err){if(err.code!=='ENOENT')throw err;}
  await db.close();
 });

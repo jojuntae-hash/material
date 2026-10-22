@@ -1,3 +1,4 @@
+import {splitVendorNote} from './vendors.js';
 export const uuid=()=>crypto.randomUUID();
 export const clean=v=>String(v??'').trim().replace(/\s+/g,' ');
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -26,16 +27,7 @@ export function validateRecord(kind,d){
 }
 export const fingerprint=d=>[d.trade,d.date,clean(d.name),clean(d.spec),clean(d.unit),String(Number(d.quantity))].join('|');
 export function resolveVendors(note,records){
- const vendors=records.filter(x=>x.kind==='vendor'&&!x.deleted),aliases=records.filter(x=>x.kind==='alias'&&!x.deleted);
- const lookup=(s,role)=>{
-  const exact=vendors.filter(x=>clean(x.data.name)===clean(s)&&x.data.roles?.includes(role));
-  const mapped=aliases.filter(x=>clean(x.data.alias)===clean(s)&&x.data.role===role).map(a=>vendors.find(v=>v.id===a.data.vendorId)).filter(Boolean);
-  const hits=[...new Map([...exact,...mapped].map(x=>[x.id,x])).values()];return hits.length===1?hits[0].id:'';
- };
- const parts=clean(note).split(' / [')[0].split('/');
- if(parts.length!==2)return {manufacturerId:'',dealerId:'',matched:false};
- const manufacturerId=lookup(parts[0],'원자재'),dealerId=lookup(parts[1],'대리점');
- return {manufacturerId,dealerId,matched:!!(manufacturerId&&dealerId)};
+ return splitVendorNote(note,records);
 }
 export function approvalStatus(d,records){
  const a=records.find(r=>r.id===d.approvalId&&!r.deleted&&r.kind==='approval');
@@ -50,6 +42,6 @@ export function approvalStatus(d,records){
 }
 export function filterRequests(records,{q='',trade='',start='',end='',vendor='',applicant='',location='',review=false},all=records){
  const names=new Map(all.filter(r=>r.kind==='vendor').map(r=>[r.id,r.data.name]));
- return records.filter(r=>r.kind==='request'&&!r.deleted).filter(({data:d})=>(!trade||d.trade===trade)&&(!start||d.date>=start)&&(!end||d.date<=end)&&(!vendor||d.manufacturerId===vendor||d.dealerId===vendor)&&(!applicant||clean(d.applicant).includes(applicant))&&(!location||clean(d.location).includes(location))&&(!review||!d.unit||!d.manufacturerId||!d.dealerId||d.note?.includes('[확인]'))&&(!q||[d.name,d.spec,d.note,d.location,d.applicant,names.get(d.manufacturerId),names.get(d.dealerId)].join(' ').toLowerCase().includes(q.toLowerCase()))).sort((a,b)=>b.data.date.localeCompare(a.data.date)||a.id.localeCompare(b.id));
+ return records.filter(r=>r.kind==='request'&&!r.deleted).filter(({data:d})=>(!trade||d.trade===trade)&&(!start||d.date>=start)&&(!end||d.date<=end)&&(!vendor||d.manufacturerId===vendor||d.dealerId===vendor)&&(!applicant||clean(d.applicant).includes(applicant))&&(!location||clean(d.location).includes(location))&&(!review||!d.unit||d.quantity===null||!d.manufacturerId||!d.dealerId||d.note?.includes('[확인]'))&&(!q||[d.name,d.spec,d.note,d.location,d.applicant,d.rawManufacturer,d.rawDealer,names.get(d.manufacturerId),names.get(d.dealerId)].join(' ').toLowerCase().includes(q.toLowerCase()))).sort((a,b)=>b.data.date.localeCompare(a.data.date)||a.id.localeCompare(b.id));
 }
 export async function sha256(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}

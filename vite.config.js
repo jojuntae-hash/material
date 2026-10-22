@@ -4,6 +4,7 @@ import path from 'node:path';
 
 export default defineConfig({
   plugins: [{name:'local-reference-data', configureServer(server) {
+    server.middlewares.use('/__local_update',(_req,res)=>{const p=path.resolve('private-data/replacement.json');if(!fs.existsSync(p)){res.statusCode=404;return res.end();}res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(fs.readFileSync(p));});
     server.middlewares.use('/__local_seed', (_req,res)=>{
       const p=path.resolve('private-data/seed.json');
       if(!fs.existsSync(p)){res.statusCode=404;return res.end('No local reference data');}
@@ -12,7 +13,7 @@ export default defineConfig({
     });
     server.middlewares.use('/__local_file', (req,res)=>{
       const id=new URL(req.url,'http://localhost').searchParams.get('id');
-      if(!/^[1-4]$/.test(id||'')){res.statusCode=404;return res.end();}
+      if(!/^[1-5]$/.test(id||'')){res.statusCode=404;return res.end();}
       const p=path.resolve(`private-data/original-${id}.xlsx`);
       if(!fs.existsSync(p)){res.statusCode=404;return res.end();}
       res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

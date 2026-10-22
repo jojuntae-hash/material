@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import {clean,uuid,resolveVendors,fingerprint,validateRecord} from './core.js';
+import {resolveColumns} from './vendors.js';
 export const columnName=XLSX.utils.encode_col;
 export function excelDate(value,date1904=false){
  if(value instanceof Date)return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
@@ -29,13 +30,14 @@ export function extractRows(info,{map=info.map,trade=info.trade,date=info.date,r
  const known=new Set(records.filter(r=>r.kind==='request'&&!r.deleted).map(r=>fingerprint(r.data)));
  return info.candidates.map(({r,i})=>{
   const value=k=>map[k]>=0?r[map[k]]:'';const note=clean(value('note'));const resolved=resolveVendors(note,records);
-  const d={trade:clean(value('trade'))||trade,date:excelDate(value('date'))||date,name:clean(value('name')),spec:clean(value('spec')),unit:clean(value('unit')),quantity:value('quantity'),manufacturerId:byName(value('manufacturer'),'원자재')||resolved.manufacturerId,dealerId:byName(value('dealer'),'대리점')||resolved.dealerId,location:clean(value('location')),applicant:clean(value('applicant')),note,approvalId:'',documentNumber:info.docNo,source:{file:filename,sheet:info.name,row:i+1},original:{cells:r,quantityColumn:columnName(map.quantity)}};
+  const company=resolveColumns(value('manufacturer'),value('dealer'),note,records);
+  const d={trade:clean(value('trade'))||trade,date:excelDate(value('date'))||date,name:clean(value('name')),spec:clean(value('spec')),unit:clean(value('unit')),quantity:value('quantity'),...company,location:clean(value('location')),applicant:clean(value('applicant')),note,approvalId:'',documentNumber:info.docNo,source:{file:filename,sheet:info.name,row:i+1},original:{cells:r,quantityColumn:columnName(map.quantity)}};
   const issues=[];try{validateRecord('request',d);}catch(e){issues.push(e.message);}if(!d.unit)issues.push('단위 미확인');if(!d.manufacturerId||!d.dealerId)issues.push('업체 연결 미확인');
   const duplicate=known.has(fingerprint(d));return {id:uuid(),data:d,issues,duplicate,selected:!issues.length&&!duplicate};
  });
 }
 export function exportRequests(rows,vendorName){
  const header=['분류','날짜','품명','규격','단위','수량','원자재','대리점','작업위치','신청자','비고','원본파일','원본시트','원본행'];
- const body=rows.map(({data:d})=>[d.trade,d.date,d.name,d.spec,d.unit,d.quantity===null?null:Number(d.quantity),vendorName(d.manufacturerId),vendorName(d.dealerId),d.location,d.applicant,d.note,d.source?.file||'',d.source?.sheet||'',d.source?.row||'']);
+ const body=rows.map(({data:d})=>[d.trade,d.date,d.name,d.spec,d.unit,d.quantity===null?null:Number(d.quantity),vendorName(d.manufacturerId)||d.rawManufacturer||'',vendorName(d.dealerId)||d.rawDealer||'',d.location,d.applicant,d.note,d.source?.file||'',d.source?.sheet||'',d.source?.row||'']);
  const ws=XLSX.utils.aoa_to_sheet([header,...body]);ws['!cols']=header.map((_,i)=>({wch:[2,3,10,11,12].includes(i)?30:16}));ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:body.length,c:header.length-1}})};const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'청구내역');XLSX.writeFile(wb,`자재청구내역_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
