@@ -1,4 +1,5 @@
 import './style.css';
+import './readability.css';
 import {sortRequests,requestSortFields} from './sort.js';
 import {Store,config,idb} from './store.js';
 import {esc as e,uuid,number,label,clean,filterRequests,approvalStatus,validateRecord,fingerprint,sha256} from './core.js';
