@@ -4,6 +4,7 @@ import path from 'node:path';
 
 export default defineConfig({
   plugins: [{name:'local-reference-data', configureServer(server) {
+    server.middlewares.use('/__local_contacts',(_req,res)=>{const p=path.resolve('private-data/contacts-v2.json');if(!fs.existsSync(p)){res.statusCode=404;return res.end();}res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(fs.readFileSync(p));});
     server.middlewares.use('/__local_update',(_req,res)=>{const p=path.resolve('private-data/replacement.json');if(!fs.existsSync(p)){res.statusCode=404;return res.end();}res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(fs.readFileSync(p));});
     server.middlewares.use('/__local_seed', (_req,res)=>{
       const p=path.resolve('private-data/seed.json');
