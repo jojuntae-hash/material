@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {resolveVendors,filterRequests,validateRecord,fingerprint} from '../src/core.js';
+import {resolveVendors,filterRequests,validateRecord,fingerprint,approvalStatus} from '../src/core.js';
 import {excelDate,detectSheet,extractRows} from '../src/excel.js';
 import {readBackup,buildBackup} from '../src/backup.js';
 import * as XLSX from 'xlsx';
@@ -9,6 +9,7 @@ import {unzipSync,zipSync} from 'fflate';
 const vendors=[{id:'sj',kind:'vendor',data:{name:'에스제이',roles:['원자재']}},{id:'sj2',kind:'vendor',data:{name:'세종넷피아',roles:['대리점']}},{id:'alias',kind:'alias',data:{alias:'세종',role:'대리점',vendorId:'sj2'}}];
 test('업체/대리점 분리: 별칭만 연결하고 분수와 메모는 보존',()=>{const r=resolveVendors('에스제이/세종',vendors);assert.equal(r.manufacturerId,'sj');assert.equal(r.dealerId,'sj2');assert.equal(r.matched,true);assert.equal(resolveVendors('400/2',vendors).matched,false);assert.equal(resolveVendors('회색 / [추가메모 U] 안전용품',vendors).matched,false);});
 test('모호한 업체명은 자동 선택하지 않음',()=>{assert.equal(resolveVendors('에스제이/세종',[...vendors,{id:'other',kind:'vendor',data:{name:'에스제이',roles:['원자재']}}]).manufacturerId,'');});
+test('당시 승인 버전과 현재 목록 비교를 구분',()=>{const status=approvalStatus({approvalId:'a',manufacturerId:'sj',approvalRevision:1},[{id:'a',kind:'approval',data:{revision:2,options:[{vendorId:'other'}],previousRevisions:[{revision:1,options:[{vendorId:'sj'}]}]}}]);assert.match(status[0],/당시 v1 목록 일치/);assert.match(status[0],/현재 v2 검토 필요/);});
 test('날짜·수량 검증과 공종별 검색',()=>{const d={trade:'소방',date:'2026-10-16',name:'백강관',spec:'25A',unit:'본',quantity:100};validateRecord('request',d);assert.throws(()=>validateRecord('request',{...d,date:'2026-02-31'}));assert.throws(()=>validateRecord('request',{...d,quantity:''}));assert.throws(()=>validateRecord('request',{...d,quantity:-1}));const r={id:'1',kind:'request',data:d};assert.equal(filterRequests([r],{q:'25a',trade:'소방'}).length,1);assert.equal(filterRequests([r],{trade:'기계'}).length,0);assert.equal(filterRequests([r],{start:'2026-10-17'}).length,0);assert.notEqual(fingerprint(d),fingerprint({...d,quantity:101}));});
 test('날짜 일련번호 46315 및 1904 체계 변환',()=>{assert.equal(excelDate(46315),'2026-10-20');assert.equal(excelDate(1,true),'1904-01-02');assert.equal(excelDate('2026년 10월 20일'),'2026-10-20');});
 test('본사 청구서 Q/S 수량 어긋남과 재청구 시트 감지',()=>{const rows=Array.from({length:13},()=>[]);rows[4][7]='파주 -기계 -047';rows[5][7]=46315;rows[7][0]='번호';rows[7][2]='품명';rows[7][8]='규격';rows[8][16]='청구물량';rows[8][18]='누계';rows[11][0]=1;rows[11][2]='빔클램프';rows[11][8]='3/8';rows[11][11]='EA';rows[11][18]=500;rows[11][19]='에스제이/세종';const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'10월 20일');const info=detectSheet(wb,'10월 20일');assert.equal(info.candidates.length,1);assert.ok(info.warnings.some(s=>s.includes('Q열')));const result=extractRows(info,{map:{...info.map,quantity:18},records:vendors,filename:'test.xlsx'});assert.equal(result[0].data.quantity,500);assert.equal(result[0].data.dealerId,'sj2');assert.equal(result[0].data.date,'2026-10-20');});
