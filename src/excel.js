@@ -41,3 +41,8 @@ export function exportRequests(rows,vendorName){
  const body=rows.map(({data:d})=>[d.trade,d.date,d.name,d.spec,d.unit,d.quantity===null?null:Number(d.quantity),vendorName(d.manufacturerId)||d.rawManufacturer||'',vendorName(d.dealerId)||d.rawDealer||'',d.location,d.applicant,d.note,d.source?.file||'',d.source?.sheet||'',d.source?.row||'']);
  const ws=XLSX.utils.aoa_to_sheet([header,...body]);ws['!cols']=header.map((_,i)=>({wch:[2,3,10,11,12].includes(i)?30:16}));ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:body.length,c:header.length-1}})};const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'청구내역');XLSX.writeFile(wb,`자재청구내역_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
+export function exportMaterialTotals(groups,filters){
+ const headers=['품명','규격','단위','누적 청구수량(정정반영)','기계','소방','청구 항목 수','수량 미입력 건수','양수 청구수량','음수 정정수량','최초 청구일','최근 청구일'];
+ const ws=XLSX.utils.aoa_to_sheet([headers,...groups.map(g=>[g.name,g.spec,g.unit,g.count===g.missing?null:g.total,g.mechanical,g.fire,g.count,g.missing,g.positive,g.adjustment,g.firstDate,g.lastDate])]);ws['!cols']=headers.map((_,i)=>({wch:i===0?32:i===1?24:18}));
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'자재별 집계');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['조건','값'],['검색',filters.q||'전체'],['공종',filters.trade||'전체'],['시작일',filters.start||'전체기간'],['종료일',filters.end||'전체기간'],['집계 기준','동일 품명·규격·단위 / 수량 공란 제외 / 음수 정정 반영']]),'집계조건');XLSX.writeFile(wb,`자재별집계_${new Date().toLocaleDateString('sv-SE')}.xlsx`);
+}
