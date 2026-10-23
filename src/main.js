@@ -1,3 +1,4 @@
+import {enableUploadDrop,validateUploadFiles} from './upload-drop.js';
 import {cartStorageKey,readMaterialCart,materialCartData} from './material-cart.js';
 import {aggregateMaterials,materialTotal,selectedMaterialHistory} from './aggregation.js';
 
@@ -76,7 +77,7 @@ function connectionSettings(){const c=config();return `<div class="settings-grid
 
 function uploadView(){
  if(!canEdit())return empty('업로드 권한이 없습니다.');
- if(!upload)return title('청구서 업로드','본사 제출용 엑셀을 불러와 확인한 내역만 반영합니다.')+`<label class="upload-zone"><span class="upload-circle">${icon('upload')}</span><h2>자재청구서 엑셀을 선택하세요</h2><p>정리된 내역표 또는 본사 제출 청구서 · .xlsx · 최대 15MB</p><span class="btn primary">파일 선택</span><input id="excel-file" type="file" accept=".xlsx" hidden></label><div class="upload-guide"><div><b>01</b><h3>시트·수량 확인</h3><p>공종과 날짜, 실제 수량 열을 확인합니다.</p></div><div><b>02</b><h3>업체·중복 검토</h3><p>잘못 읽은 값은 저장 전에 수정합니다.</p></div><div><b>03</b><h3>선택 항목 반영</h3><p>확인한 행만 저장하고 원본을 보관합니다.</p></div></div>`;
+ if(!upload)return title('청구서 업로드','본사 제출용 엑셀을 불러와 확인한 내역만 반영합니다.')+`<label class="upload-zone"><span class="upload-circle">${icon('upload')}</span><h2>엑셀 파일을 여기에 끌어다 놓으세요</h2><p>또는 아래 파일 선택 버튼을 눌러 주세요 · .xlsx · 최대 15MB</p><span class="btn primary">파일 선택</span><input id="excel-file" type="file" accept=".xlsx" hidden></label><div class="upload-guide"><div><b>01</b><h3>시트·수량 확인</h3><p>공종과 날짜, 실제 수량 열을 확인합니다.</p></div><div><b>02</b><h3>업체·중복 검토</h3><p>잘못 읽은 값은 저장 전에 수정합니다.</p></div><div><b>03</b><h3>선택 항목 반영</h3><p>확인한 행만 저장하고 원본을 보관합니다.</p></div></div>`;
  const u=upload,rows=u.rows||[],chosen=rows.filter(r=>r.selected),pending=rows.filter(r=>!r.selected);const mappingFields={name:'품명',spec:'규격',unit:'단위',quantity:'수량',note:'비고',trade:'공종',date:'날짜',manufacturer:'원자재',dealer:'대리점',location:'작업위치',applicant:'신청자'};
  return title('청구서 업로드 검토',`${e(u.filename)} · 원본을 보존하고 확인한 항목만 반영합니다.`,btn('다른 파일 선택','clear-upload','secondary'))+`<div class="steps"><span class="done">1 파일 선택</span><span class="current">2 시트 · 수량 확인</span><span>3 검토 · 반영</span></div>${u.wb?`<section class="panel"><form id="mapping-form"><div class="mapping-top"><label>시트 선택<select id="sheet-select">${u.wb.SheetNames.map(n=>option(n,n,u.sheet)).join('')}</select></label><label>공종<select name="trade">${option('','공종 선택',u.trade)}${option('기계','기계',u.trade)}${option('소방','소방',u.trade)}</select></label><label>청구일<input type="date" name="date" value="${e(u.date)}"></label><label>수량 열<select name="quantity">${Array.from({length:27},(_,i)=>option(i,`${columnName(i)}열`,u.map?.quantity)).join('')}</select></label></div>${u.info?.warnings.map(w=>`<div class="notice">${e(w)}</div>`).join('')||''}${!u.info?.supported?'<div class="notice">지원되는 품명·규격 머리글을 찾지 못했습니다. 다른 시트를 선택하세요.</div>':''}<details class="column-details"><summary>전체 열 연결 확인</summary><div class="column-grid">${Object.entries(mappingFields).filter(([k])=>k!=='quantity').map(([k,n])=>`<label>${n}<select name="col-${k}">${option(-1,'해당 열 없음',u.map?.[k])}${Array.from({length:27},(_,i)=>option(i,`${columnName(i)}열`,u.map?.[k])).join('')}</select></label>`).join('')}</div></details><div class="mapping-actions"><label class="check-label"><input type="checkbox" name="confirmed" ${u.confirmed?'checked':''} required> 원본을 확인했고 선택한 수량 열이 맞습니다.</label><button type="submit" class="btn secondary" ${!u.info?.supported?'disabled':''}>미리보기 갱신</button></div></form></section>`:'<div class="hint">이전에 보류한 내역을 이어서 검토합니다. 각 행을 수정한 뒤 선택하세요.</div>'}<div class="section-heading"><div><h2>변환 미리보기 <span class="count">${rows.length}</span></h2><p>선택 ${chosen.length}행 · 보류 ${pending.length}행 · 중복 후보 ${rows.filter(r=>r.duplicate).length}행</p></div><div>${btn('유효한 행 선택','select-valid','secondary')} ${btn('선택 해제','select-none','ghost')}</div></div><div class="table-panel"><table class="upload-table"><thead><tr><th>선택</th><th>공종·날짜</th><th>품명 / 규격</th><th>수량</th><th>원자재 / 대리점</th><th>확인사항</th><th></th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td><input type="checkbox" class="row-check" data-index="${i}" ${r.selected?'checked':''} aria-label="${e(r.data.name)} 선택"></td><td>${e(r.data.trade)}<small>${e(r.data.date)}</small></td><td><b>${e(r.data.name)}</b><small>${e(r.data.spec)}</small></td><td>${e(r.data.quantity)} ${e(r.data.unit)}</td><td>${e(vendorName(r.data.manufacturerId)||'미등록')}<small>${e(vendorName(r.data.dealerId)||'미등록')}</small></td><td>${r.duplicate?badge('중복 후보','warn'):''}${r.issues.map(v=>badge(v,'warn')).join(' ')||badge('확인 가능','good')}</td><td>${btn('수정','edit-upload','ghost',`data-index="${i}"`)}</td></tr>`).join('')}</tbody></table></div><div class="upload-footer"><div><b>${chosen.length}행 반영 예정</b><p>미선택 ${pending.length}행은 보류 이력으로 보관합니다. 선택한 중복 후보는 반복 청구로 별도 등록됩니다.</p></div>${btn(chosen.length?'확인한 '+chosen.length+'행 반영':'보류 내역 저장','commit-upload','primary',u.wb&&!u.confirmed?'disabled':'')}</div>`;
 }
@@ -148,7 +149,7 @@ async function saveEditor(form){const fd=new FormData(form),x=editing,d={...x.da
 }
 
 function selectSheet(name){const info=detectSheet(upload.wb,name);upload={...upload,sheet:name,info,map:{...info.map},trade:info.trade||'',date:info.date||'',confirmed:false,rows:[]};if(info.supported)upload.rows=extractRows(info,{records:store.records,filename:upload.filename});}
-async function loadExcel(file){const hash=await sha256(await file.arrayBuffer());if(store.files.some(f=>f.type==='upload'&&f.hash===hash))throw Error('이미 등록한 파일입니다. 가져오기 이력에서 보류 내역을 확인하세요.');const wb=await readWorkbook(file);upload={file,filename:file.name,hash,wb};const sheet=wb.SheetNames.find(n=>!(/삭제|재청구|취소/.test(n))&&detectSheet(wb,n).supported)||wb.SheetNames[0];selectSheet(sheet);view='upload';render();}
+async function loadExcel(file){validateUploadFiles([file]);const hash=await sha256(await file.arrayBuffer());if(store.files.some(f=>f.type==='upload'&&f.hash===hash))throw Error('이미 등록한 파일입니다. 가져오기 이력에서 보류 내역을 확인하세요.');const wb=await readWorkbook(file);upload={file,filename:file.name,hash,wb};const sheet=wb.SheetNames.find(n=>!(/삭제|재청구|취소/.test(n))&&detectSheet(wb,n).supported)||wb.SheetNames[0];selectSheet(sheet);view='upload';render();}
 async function commitUpload(){
  const selected=upload.rows.filter(r=>r.selected),pending=upload.rows.filter(r=>!r.selected);for(const r of selected)validateRecord('request',r.data);
  if(upload.wb&&!upload.confirmed)throw Error('수량 열 확인 후 미리보기를 갱신하세요.');
@@ -321,3 +322,24 @@ function loadCart(){return readMaterialCart(localStorage,currentCartKey());}
 function saveCart(keys){localStorage.setItem(currentCartKey(),JSON.stringify([...keys]));}
 function cartDialog(){const keys=loadCart(),data=materialCartData(store.records,keys);showDialog(`<div class="modal-body"><h2>담은 자재 <span class="count">${keys.size}</span></h2><p>이 브라우저에 현장별로 보관합니다. 검색조건과 관계없이 전체 기간의 최신 청구내역을 조회합니다. 다른 기기에는 공유되지 않습니다.</p><div class="aggregate-selection">${btn('한꺼번에 내역 보기','cart-history','primary',data.rows.length?'':'disabled')}${btn('엑셀 내려받기','cart-export','secondary',data.rows.length?'':'disabled')}${btn('모두 비우기','cart-empty','ghost',keys.size?'':'disabled')}</div>${data.unavailable?`<p class="notice">삭제되거나 수정되어 찾을 수 없는 자재 ${data.unavailable}개는 조회·엑셀에서 제외됩니다. 해당 항목을 제거하고 다시 검색해 담아 주세요.</p>`:''}<div class="cart-items">${[...keys].map(key=>{let parts=[];try{parts=JSON.parse(key);}catch{}const g=data.groups.find(g=>g.key===key);return `<div class="cart-item"><div><b>${e(g?.name||parts[0]||'확인 필요')}</b><small>${e(g?.spec||parts[1]||'규격 미등록')} · ${e(g?.unit||parts[2]||'단위 미등록')}${g?' · '+aggregateQuantity(g)+' · 청구 '+g.count+'건':' · 현재 자료 없음'}</small></div>${btn('제거','cart-remove','secondary',`data-key="${e(key)}" aria-label="${e(g?.name||parts[0]||'자재')} ${e(g?.spec||parts[1]||'')} 담기 취소"`)}</div>`;}).join('')||'<p>담은 자재가 없습니다. 검색 후 체크하고 ‘선택 자재 담기’를 눌러 주세요.</p>'}</div></div>`,true);}
 
+
+enableUploadDrop({document,isUpload:()=>view==='upload'&&canEdit(),onFile:file=>run(()=>loadExcel(file)),onError:message=>toast(message,true)});
+
+let liveSearchTimer;
+const liveSearchSelector='#request-filter input[name="q"],#master-filter input[name="q"],#aggregate-filter input[name="q"]';
+function scheduleLiveSearch(input){
+ clearTimeout(liveSearchTimer);
+ liveSearchTimer=setTimeout(()=>{
+  if(!input.isConnected||document.activeElement!==input||loading)return;
+  const form=input.form,fd=new FormData(form),start=input.selectionStart,end=input.selectionEnd;
+  if(fd.get('start')&&fd.get('end')&&fd.get('start')>fd.get('end'))return;
+  if(form.id==='request-filter'){for(const k of ['q','start','end','vendor','applicant','location'])filters[k]=String(fd.get(k)||'');filters.review=fd.has('review');page=1;}
+  if(form.id==='master-filter')masterSearch=input.value;
+  if(form.id==='aggregate-filter'){aggregateSelection.clear();for(const k of ['q','trade','start','end','sort'])aggregateFilter[k]=String(fd.get(k)||'');}
+  render();const next=document.querySelector(`#${form.id} input[name="q"]`);if(next){next.focus({preventScroll:true});next.setSelectionRange(start,end);}
+ },250);
+}
+document.addEventListener('input',event=>{if(!event.target.matches(liveSearchSelector))return;clearTimeout(liveSearchTimer);if(!event.isComposing)scheduleLiveSearch(event.target);});
+document.addEventListener('compositionstart',()=>clearTimeout(liveSearchTimer));
+document.addEventListener('compositionend',event=>{if(event.target.matches(liveSearchSelector))scheduleLiveSearch(event.target);});
+document.addEventListener('submit',()=>clearTimeout(liveSearchTimer),true);

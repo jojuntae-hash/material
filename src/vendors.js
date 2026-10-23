@@ -1,7 +1,7 @@
 // Reviewed spellings point only to companies that actually exist in the catalogue.
 export const reviewedAliases=[
  ['세종','대리점','세종넷피아'],['진영','대리점','진영씨앤아이'],['민석','대리점','민석이노베이션'],['삼안','대리점','삼안프라자'],['대화','대리점','대화기업'],['통일 S&S','대리점','통일에스엔에스'],
- ['세아','원자재','세아제강'],['한국슈어','원자재','한국슈어조인트'],['협신','원자재','협신플랜지'],['프롬파스트','원자재','프럼파스트'],['환경덕트','원자재','환경닥트'],['환경덕트','대리점','환경닥트'],['DRNS','원자재','디알앤에스'],['DRNS','대리점','디알앤에스'],['정일테크(청암피앤피)','대리점','청암피앤피']
+ ['TKG','원자재','TKG 애강'],['세아','원자재','세아제강'],['한국슈어','원자재','한국슈어조인트'],['협신','원자재','협신플랜지'],['프롬파스트','원자재','프럼파스트'],['환경덕트','원자재','환경닥트'],['환경덕트','대리점','환경닥트'],['DRNS','원자재','디알앤에스'],['DRNS','대리점','디알앤에스'],['정일테크(청암피앤피)','대리점','청암피앤피']
 ];
 const tidy=v=>String(v??'').trim().replace(/\s+/g,' ');
 const normal=v=>tidy(v).toLowerCase().replace(/주식회사|\(주\)|㈜/g,'').replace(/[\s._&()-]/g,'');
@@ -36,6 +36,7 @@ export function resolveColumns(manufacturer,dealer,note,records){
  const dash=rawManufacturer.match(/^(.+?)-(.+)$/);const dashPair=dash?splitVendorNote(dash[1]+'/'+dash[2],records):null;
  if(!maker.id&&combined.manufacturerId)maker=combined.resolution.manufacturer;
  if(!maker.id&&dashPair?.matched)maker=dashPair.resolution.manufacturer;
- const manufacturerId=maker.id||(!rawManufacturer?fromNote.manufacturerId:''),dealerId=seller.id||(!rawDealer?(combined.dealerId||dashPair?.dealerId||fromNote.dealerId):'');
- return {manufacturerId:manufacturerId||'',dealerId:dealerId||'',rawManufacturer:rawManufacturer||fromNote.rawManufacturer,rawDealer:rawDealer||fromNote.rawDealer,vendorResolution:{manufacturer:maker,dealer:seller},vendorIssues:[...(!manufacturerId&&rawManufacturer?[maker.status==='ambiguous'?'원자재 약칭 복수 후보':'원자재 연결 미확인']:[]),...(!dealerId&&rawDealer?[seller.status==='ambiguous'?'대리점 약칭 복수 후보':'대리점 연결 미확인']:[])]};
+ const singleDealer=!tidy(note).includes('/')?resolveVendorToken(note,'대리점',records):null;
+ const manufacturerId=maker.id||(!rawManufacturer?fromNote.manufacturerId:''),dealerId=seller.id||(!rawDealer?(combined.dealerId||dashPair?.dealerId||fromNote.dealerId||singleDealer?.id):'');
+ return {manufacturerId:manufacturerId||'',dealerId:dealerId||'',rawManufacturer:rawManufacturer||fromNote.rawManufacturer,rawDealer:rawDealer||fromNote.rawDealer||(singleDealer?.id?tidy(note):''),vendorResolution:{manufacturer:maker,dealer:seller},vendorIssues:[...(!manufacturerId&&rawManufacturer?[maker.status==='ambiguous'?'원자재 약칭 복수 후보':'원자재 연결 미확인']:[]),...(!dealerId&&rawDealer?[seller.status==='ambiguous'?'대리점 약칭 복수 후보':'대리점 연결 미확인']:[])]};
 }
