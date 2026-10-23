@@ -17,3 +17,9 @@ export function aggregateMaterials(records,{q='',trade='',start='',end='',sort='
 }
 export function materialTotal(records,data){return aggregateMaterials(records).find(g=>g.key===materialKey(data));}
 
+export function selectedMaterialHistory(records,keys,filters={}){
+ const groups=aggregateMaterials(records,filters).filter(g=>keys.has(g.key));
+ const rows=groups.flatMap(g=>g.rows).sort((a,b)=>b.data.date.localeCompare(a.data.date)||a.id.localeCompare(b.id));
+ const totals=aggregateMaterials(rows.map(r=>({...r,data:{...r.data,name:'선택 자재'}})));
+ return {groups,rows,totals};
+}
