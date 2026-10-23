@@ -38,5 +38,5 @@ export function resolveColumns(manufacturer,dealer,note,records){
  if(!maker.id&&dashPair?.matched)maker=dashPair.resolution.manufacturer;
  const singleDealer=!tidy(note).includes('/')?resolveVendorToken(note,'대리점',records):null;
  const manufacturerId=maker.id||(!rawManufacturer?fromNote.manufacturerId:''),dealerId=seller.id||(!rawDealer?(combined.dealerId||dashPair?.dealerId||fromNote.dealerId||singleDealer?.id):'');
- return {manufacturerId:manufacturerId||'',dealerId:dealerId||'',rawManufacturer:rawManufacturer||fromNote.rawManufacturer,rawDealer:rawDealer||fromNote.rawDealer||(singleDealer?.id?tidy(note):''),vendorResolution:{manufacturer:maker,dealer:seller},vendorIssues:[...(!manufacturerId&&rawManufacturer?[maker.status==='ambiguous'?'원자재 약칭 복수 후보':'원자재 연결 미확인']:[]),...(!dealerId&&rawDealer?[seller.status==='ambiguous'?'대리점 약칭 복수 후보':'대리점 연결 미확인']:[])]};
+ return {manufacturerId:manufacturerId||'',dealerId:dealerId||'',rawManufacturer:combined.rawManufacturer||rawManufacturer||fromNote.rawManufacturer,rawDealer:rawDealer||combined.rawDealer||fromNote.rawDealer||(singleDealer?tidy(note):''),vendorResolution:{manufacturer:maker,dealer:seller},vendorIssues:[...(!manufacturerId&&rawManufacturer?[maker.status==='ambiguous'?'원자재 약칭 복수 후보':'원자재 연결 미확인']:[]),...(!dealerId&&rawDealer?[seller.status==='ambiguous'?'대리점 약칭 복수 후보':'대리점 연결 미확인']:[])]};
 }
