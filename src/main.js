@@ -1,3 +1,4 @@
+import {composerView,setupComposer} from './request-composer.js';
 import {enableUploadDrop,validateUploadFiles} from './upload-drop.js';
 import {cartStorageKey,readMaterialCart,materialCartData} from './material-cart.js';
 import {aggregateMaterials,materialTotal,selectedMaterialHistory} from './aggregation.js';
@@ -38,14 +39,14 @@ function toast(msg,error=false){document.querySelector('#toast')?.remove();const
 async function run(fn){if(loading)return;loading=true;document.body.classList.add('busy');try{await fn();}catch(err){console.error(err);toast(err.message||'작업 중 오류가 발생했습니다.',true);}finally{loading=false;document.body.classList.remove('busy');}}
 function title(text,sub,actions=''){return `<div class="page-title"><div><div class="eyebrow">MATERIAL MANAGEMENT</div><h1>${text}</h1><p>${sub}</p></div><div class="title-actions">${actions}</div></div>`;}
 function shell(body){
- const nav=[['request','list','청구내역 조회'],['vendor','phone','업체연락처 조회'],['approval','check','자재승인목록 조회'],['aggregate','box','자재별 집계'],['settings','settings','설정']];
+ const nav=[['request','list','청구내역 조회'],['compose','edit','청구서 작성'],['vendor','phone','업체연락처 조회'],['approval','check','자재승인목록 조회'],['aggregate','box','자재별 집계'],['settings','settings','설정']];
  const local=store.mode==='local';
  document.querySelector('#app').innerHTML=`<aside class="sidebar"><a href="#" class="brand" data-view="request"><span class="brand-icon">${icon('box')}</span><span>자재청구 관리<small>MATERIAL DESK</small></span></a><div class="project"><span class="project-dot"></span><div>${e(store.projectName)}<small>기계 · 소방 통합 관리</small></div></div><div class="nav-label">현장 관리</div><nav>${nav.map(([v,i,n])=>`<button class="nav-item ${view===v?'active':''}" data-view="${v}">${icon(i)}<span>${n}</span>${view===v?'<span class="nav-dot"></span>':''}</button>`).join('')}</nav><div class="sidebar-bottom"><div>${icon(local?'file':'cloud')} <b>${local?'로컬 확인 모드':'Supabase 연결'}</b></div><p>${local?'이 브라우저에 저장됩니다.<br>공유 저장은 설정에서 연결하세요.':e(store.session?.user?.email||'로그인 필요')}</p><button class="side-link" data-action="connection">${local?'공유 데이터 연결하기 →':'연결 및 사용자 설정 →'}</button></div></aside><div class="workspace"><header class="topbar"><div><span class="breadcrumb">현장 관리</span><span class="slash">/</span><b>${view==='upload'?'청구서 업로드':nav.find(n=>n[0]===view)?.[2]||'자재 관리'}</b></div><div class="top-right"><span class="status-dot ${local?'local':''}"></span><span>${local?'로컬 저장':store.session?'공유 저장':'로그인 필요'}</span><span class="avatar">${local?'현':store.role==='admin'?'관':'사'}</span></div></header><main>${store.mode==='cloud'&&!store.session?loginScreen():store.mode==='cloud'&&!store.projectId?projectScreen():body}</main><footer>파주 콘텐츠시티 · 자재청구 관리<span>기계 / 소방</span></footer></div><div id="modal-root"></div>`;
 }
 function arrangeRequestDates(){const range=document.querySelector('.desktop-date-range'),slot=document.querySelector('.mobile-date-slot'),main=document.querySelector('#request-filter .filter-main');if(!range||!slot||!main)return;if(matchMedia('(max-width:767px)').matches)slot.append(range);else main.insertBefore(range,main.querySelector('button'));}
 function render(){
  if(store.mode==='cloud'&&!store.session){shell('');return;}
- const fn={request:requestsView,vendor:vendorsView,approval:approvalsView,settings:settingsView,aggregate:aggregateView,upload:uploadView};shell(fn[view]());arrangeRequestDates();
+ const fn={request:requestsView,compose:composerView,vendor:vendorsView,approval:approvalsView,settings:settingsView,aggregate:aggregateView,upload:uploadView};shell(fn[view]());arrangeRequestDates();
 }
 function loginScreen(){return `<div class="login-wrap"><div class="login-illustration">${icon('box')}<h1>현장의 모든 자재,<br>한 곳에서 관리하세요.</h1><p>기계·소방 청구내역과 거래처 정보를<br>PC와 휴대폰에서 함께 확인합니다.</p></div><div class="panel login-panel"><div class="eyebrow">WELCOME BACK</div><h2>공유 데이터 로그인</h2><p>Supabase에 등록된 이메일 계정으로 로그인하세요.</p><form id="login-form"><label>이메일<input type="email" name="email" autocomplete="username" required placeholder="이메일 주소"></label><label>비밀번호<input type="password" name="password" autocomplete="current-password" required minlength="6" placeholder="비밀번호"></label><button class="btn primary full" type="submit">로그인 ${icon('arrow')}</button></form><div class="notice">처음 연결할 때는 Supabase SQL Editor에서 전용 테이블 생성 SQL을 실행하고, Authentication에서 사용자를 등록해야 합니다.</div>${btn('연결 설정 확인','connection','ghost')}${import.meta.env.DEV?btn('로컬 확인 모드로 사용','local-mode','ghost'):''}</div></div>`;}
 function projectScreen(){return `<div class="panel narrow"><h1>새 현장 시작하기</h1><p>이 계정에 연결된 자재 관리 현장이 없습니다.</p><form id="project-form"><label>현장명<input name="name" value="파주 콘텐츠시티" required></label><button type="submit" class="btn primary">현장 만들기</button></form><p class="help">기존 현장에 참여하려면 현장 관리자에게 사용자 권한 등록을 요청하세요.</p></div>`;}
@@ -343,3 +344,5 @@ document.addEventListener('input',event=>{if(!event.target.matches(liveSearchSel
 document.addEventListener('compositionstart',()=>clearTimeout(liveSearchTimer));
 document.addEventListener('compositionend',event=>{if(event.target.matches(liveSearchSelector))scheduleLiveSearch(event.target);});
 document.addEventListener('submit',()=>clearTimeout(liveSearchTimer),true);
+
+setupComposer({getStore:()=>store,rerender:render,notice:toast});

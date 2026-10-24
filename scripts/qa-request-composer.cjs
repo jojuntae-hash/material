@@ -1,0 +1,33 @@
+const runtimeModules=process.env.WORKSPACE_NODE_MODULES||require('path').join(require('os').homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules');
+const {chromium}=require(require('path').join(runtimeModules,'playwright'));
+const fs=require('fs');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+ const context=await browser.newContext({viewport:{width:1500,height:1000},acceptDownloads:true});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+ await page.goto('http://127.0.0.1:5173/');
+ await page.evaluate(async()=>{const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('material-manager-v1',1);q.onupgradeneeded=()=>{q.result.createObjectStore('state');q.result.createObjectStore('files');};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});await new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({records:[{id:'qa1',kind:'request',version:1,data:{date:'2026-10-20',name:'고무발포보온재',spec:'25TxD15',unit:'M',trade:'기계',quantity:5}},{id:'qa2',kind:'request',version:1,data:{date:'2026-10-21',name:'고무발포보온재',spec:'40TxD20',unit:'M',trade:'소방',quantity:3}}],history:[],files:[],projectName:'테스트 현장',role:'admin',projectId:'local'},'local');tx.oncomplete=resolve;tx.onerror=reject;});db.close();});
+ await page.goto('http://127.0.0.1:5173/?mode=local');await page.locator('[data-view="compose"]').click();
+ if((await page.locator('#compose-trade option').allTextContents()).join(',')!=='전체,기계,소방')throw Error('trade options missing');
+ if(await page.locator('.composer-defaults').first().getAttribute('open')!==null)throw Error('basic info not collapsed');
+ await page.locator('.composer-defaults').first().locator('summary').click();
+ await page.locator('[data-draft="date"]').fill('2026-10-23');if(await page.locator('[data-draft="delivery"]').inputValue()!=='2026-10-26')throw Error('Friday delivery');
+ await page.locator('[data-draft="date"]').fill('2026-10-24');if(await page.locator('[data-draft="delivery"]').inputValue()!=='2026-10-26')throw Error('delivery');
+ await page.locator('.composer-defaults').first().locator('summary').click();
+ await page.locator('#compose-search').fill('고무발포 25T');await page.locator('#compose-results .composer-result').waitFor();if(await page.locator('#compose-results .composer-result').count()!==1)throw Error('search failed');
+
+ await page.locator('[data-compose="add"]').click();await page.locator('[data-row="0"][data-field="quantity"]').fill('12.5');
+ await page.reload();await page.locator('[data-view="compose"]').click();if(await page.locator('[data-row="0"][data-field="quantity"]').inputValue()!=='12.5')throw Error('restore failed');
+ const dl=page.waitForEvent('download');await page.locator('[data-compose="export"]').click();const download=await dl;fs.mkdirSync('test-results',{recursive:true});await download.saveAs('test-results/request-composer.xlsx');
+ await page.locator('#compose-import-file').setInputFiles('test-results/request-composer.xlsx');await page.locator('[data-compose="import-append"]').click();if(await page.locator('.composer-item').count()!==2)throw Error('legacy import');
+ const X=require('../node_modules/xlsx');const wb=X.utils.book_new();X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['신청자','품명','수량','규격','단위'],['김','엑셀시험자재',3,'25A','EA']]),'간단표');X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet([['품명'],['품명만있는자재']]),'품명만');X.writeFile(wb,'test-results/import-fixture.xlsx');
+ await page.locator('#compose-import-file').setInputFiles('test-results/import-fixture.xlsx');await page.locator('[data-compose="import-append"]').click();if(await page.locator('[data-row="2"][data-field="name"]').inputValue()!=='엑셀시험자재')throw Error('simple import');
+ await page.locator('#compose-import-file').setInputFiles('test-results/import-fixture.xlsx');await page.locator('#compose-import-sheet').selectOption('품명만');await page.locator('[data-compose="import-append"]').click();if(await page.locator('[data-row="3"][data-field="name"]').inputValue()!=='품명만있는자재')throw Error('name only');await page.locator('[data-row="3"][data-field="quantity"]').fill('4');await page.locator('[data-row="3"][data-field="unit"]').fill('EA');await page.locator('[data-row="3"][data-field="spec"]').fill('수정규격');
+ const downloaded=page.waitForEvent('download');await page.locator('[data-compose="export"]').click();await (await downloaded).saveAs('test-results/request-import-roundtrip.xlsx');const roundtrip=X.readFile('test-results/request-import-roundtrip.xlsx');if(roundtrip.Sheets[roundtrip.SheetNames[0]].I15.v!=='수정규격')throw Error('import export edit');
+ for(let i=0;i<26;i++)await page.locator('[data-compose="add"]').first().click();
+ await page.locator('[data-row="0"][data-field="quantity"]').focus();await page.keyboard.press('Enter');if(await page.locator('[data-row="1"][data-field="quantity"]').evaluate(e=>e!==document.activeElement))throw Error('Enter navigation');
+ const height=await page.locator('.composer-item').first().evaluate(e=>e.getBoundingClientRect().height);if(height>65)throw Error('rows too tall: '+height);
+ await page.screenshot({path:'test-results/request-composer-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:900});await page.screenshot({path:'test-results/request-composer-mobile.png',fullPage:true});const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);if(overflow)throw Error('mobile overflow');
+ await page.locator('[data-compose="remove"]').first().click();if(await page.locator('.composer-item').count()!==29)throw Error('remove failed');
+ if(errors.length)throw Error(errors.join(';'));console.log('PASS: search, add, defaults, edit, reload restore, download, remove, mobile, no browser errors');await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

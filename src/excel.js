@@ -16,6 +16,9 @@ export function detectSheet(wb,name){
  const headers=rows[header].map(clean);const form=headers.includes('번호')&&header>0;
  const column=(names,fallback)=>{const n=headers.findIndex(v=>names.includes(v));return n<0?fallback:n;};
  const map=form?{name:2,spec:8,unit:11,quantity:16,note:19,location:20,applicant:21,trade:-1,date:-1,manufacturer:-1,dealer:-1}:{name:column(['품명'],2),spec:column(['규격'],3),unit:column(['단위'],4),quantity:column(['수량','청구수량'],5),note:column(['비고'],6),trade:column(['분류','소방·기계 구분'],0),date:column(['날짜','청구일'],1),manufacturer:column(['원자재'],-1),dealer:column(['대리점'],-1),location:column(['작업위치'],-1),applicant:column(['신청자'],-1)};
+ // New request forms retain per-row trade outside the printed area.
+ if(form&&clean(rows[header+1]?.[22])==='구분')map.trade=22;
+ if(form&&headers[19]==='대리점'){map.dealer=19;map.note=-1;}
  const docNo=form?clean(rows[4]?.[7]):'';const trade=docNo.includes('소방')?'소방':docNo.includes('기계')?'기계':'';
  const date=form?excelDate(rows[5]?.[7],wb.Workbook?.WBProps?.date1904):'';
  const candidates=rows.map((r,i)=>({r,i})).filter(({r,i})=>i>header&&clean(r[map.name])&&(!form||typeof r[0]==='number'));
