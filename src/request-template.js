@@ -48,6 +48,13 @@ export function fillRequestTemplate(bytes,d){
  const date=Math.round((Date.parse(d.date+'T00:00:00Z')-Date.UTC(1899,11,30))/86400000);
  for(const [ref,v] of Object.entries({H5:d.number||'',H6:date,P5:d.project||'',P6:d.manager||'',S6:d.delivery||''}))xml=writeCell(xml,ref,v);
  d.rows.forEach((r,i)=>{const n=i+12;for(const [col,v] of Object.entries({A:i+1,C:r.name,I:r.spec,L:r.unit,Q:Number(r.quantity),T:r.dealer,U:r.location,V:r.applicant,W:r.trade}))xml=writeCell(xml,col+n,v);});
+ // Internal tracking columns contain inconsistent legacy fonts and borders.
+ // Use the template's plain centered style, including blank X cells beside W.
+ xml=xml.replace(/<c\b[^>]*\br="[UVWX](\d+)"[^>]*>/g,(tag,row)=>{
+  if(Number(row)<12)return tag;
+  const plain=tag.replace(/\s+s="[^"]*"/g,'');
+  return plain.replace(/(\/?>)$/, ' s="1"$1');
+ });
  files['xl/worksheets/sheet2.xml']=strToU8(xml);
  let wb=strFromU8(files['xl/workbook.xml']);wb=wb.replace(/(<definedName\b[^>]*name="_xlnm.Print_Area"[^>]*>)([\s\S]*?)(<\/definedName>)/,(_,a,b,c)=>a+b.replace(/\$A\$1:\$T\$\d+/,`$A$1:$T$${Math.max(42,d.rows.length+11)}`)+c);files['xl/workbook.xml']=strToU8(wb);
  const sheetName=`${Number(d.date.slice(5,7))}월${Number(d.date.slice(8,10))}일`;

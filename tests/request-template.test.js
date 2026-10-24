@@ -53,3 +53,10 @@ test('위치·신청자는 중복 없이 합치고 기계·소방 수량은 각�
  assert.equal(sheet.Q12.v,35);assert.equal(sheet.U12.v,'1번 스튜디오 / 2번 스튜디오');assert.equal(sheet.V12.v,'김 차장 / 박 팀장');assert.equal(sheet.W12.v,'기계');
  assert.equal(sheet.Q13.v,7);assert.equal(sheet.U13.v,'3번 스튜디오');assert.equal(sheet.V13.v,'이 부장');assert.equal(sheet.W13.v,'소방');
 });
+test('인쇄 밖 위치·신청자·구분의 글꼴·정렬과 잔여 테두리를 통일',()=>{
+ const d=draft();d.rows=Array.from({length:25},()=>({...d.rows[0],trade:'소방'}));
+ const bytes=fillRequestTemplate(template,d),xml=strFromU8(unzipSync(bytes)['xl/worksheets/sheet2.xml']);
+ for(const column of ['U','V','W'])for(let row=12;row<37;row++)assert.match(xml.match(new RegExp(`<c\\b[^>]*r="${column}${row}"[^>]*>`))[0],/ s="1"/);
+ assert.match(xml.match(/<c\b[^>]*r="X16"[^>]*>/)[0],/ s="1"/);
+ const wb=XLSX.read(bytes);assert.equal(wb.Sheets[wb.SheetNames[0]].W36.v,'소방');
+});
