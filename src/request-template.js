@@ -16,7 +16,7 @@ export function validateDraft(d){
 }
 const xmlEscape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 export function mergeDraftRows(rows){
- const groups=new Map(),norm=v=>String(v??'').normalize('NFKC').trim().replace(/\s+/g,' ').toUpperCase();
+ const groups=new Map(),norm=v=>String(v??'').normalize('NFKC').replace(/[\s\u200B-\u200D\u2060\uFEFF]+/g,'').toUpperCase();
  for(const row of rows){const key=JSON.stringify(['name','spec','unit','dealer','trade'].map(k=>norm(row[k])));if(!groups.has(key))groups.set(key,{...row,quantity:0,locations:[],applicants:[]});const g=groups.get(key);g.quantity=Number((g.quantity+Number(row.quantity)).toPrecision(15));if(row.location&&!g.locations.includes(row.location))g.locations.push(row.location);if(row.applicant&&!g.applicants.includes(row.applicant))g.applicants.push(row.applicant);}
  return [...groups.values()].map(({locations,applicants,...r})=>({...r,location:locations.join(' / '),applicant:applicants.join(' / ')}));
 }
@@ -46,17 +46,21 @@ function writeCell(xml,ref,value){
 export function fillRequestTemplate(bytes,d){
  validateDraft(d);const original=d;d={...d,rows:d.mergeItems?mergeDraftRows(d.rows):d.rows};const files=unzipSync(bytes);let xml=strFromU8(files['xl/worksheets/sheet2.xml']);
  const lastRow=d.rows.length+11;
- if(lastRow>120){
-  const prototype=xml.match(/<row\b[^>]*\br="12"[^>]*>[\s\S]*?<\/row>/)[0];
-  let added='',merges='';
-  for(let row=121;row<=lastRow;row++){
-   added+=prototype.replace(/\br="([A-Z]*)12"/g,(_,col)=>`r="${col}${row}"`);
-   for(const [a,b] of [['A','B'],['C','H'],['I','K'],['L','M'],['N','O'],['Q','R']])merges+=`<mergeCell ref="${a}${row}:${b}${row}"/>`;
-  }
-  xml=xml.replace('</sheetData>',added+'</sheetData>').replace('</mergeCells>',merges+'</mergeCells>');
-  xml=xml.replace(/<mergeCells count="\d+"/,`<mergeCells count="${(xml.match(/<mergeCell /g)||[]).length}"`);
-  xml=xml.replace(/<dimension ref="[^"]*"\/>/,`<dimension ref="A1:X${lastRow}"/>`);
+ // Rebuild every body row from the known-good first row. The source's
+ // final pre-existing rows also have missing merges and inconsistent styles.
+ const bodyEnd=Math.max(120,lastRow);
+ const prototype=xml.match(/<row\b[^>]*\br="12"[^>]*>[\s\S]*?<\/row>/)[0];
+ let body='',merges='';
+ for(let row=12;row<=bodyEnd;row++){
+  body+=prototype.replace(/\br="([A-Z]*)12"/g,(_,col)=>`r="${col}${row}"`);
+  for(const [a,b] of [['A','B'],['C','H'],['I','K'],['L','M'],['N','O'],['Q','R']])merges+=`<mergeCell ref="${a}${row}:${b}${row}"/>`;
  }
+ xml=xml.replace(/<sheetData>([\s\S]*?)<\/sheetData>/,(_,data)=>'<sheetData>'+data.replace(/<row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/row>/g,(r,n)=>Number(n)<12?r:'')+body+'</sheetData>');
+ xml=xml.replace(/<mergeCells\b[^>]*>([\s\S]*?)<\/mergeCells>/,(_,data)=>{
+  const header=[...data.matchAll(/<mergeCell ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"\/>/g)].filter(m=>Number(m[4])<12).map(m=>m[0]).join('');
+  const all=header+merges;return `<mergeCells count="${(all.match(/<mergeCell /g)||[]).length}">${all}</mergeCells>`;
+ });
+ xml=xml.replace(/<dimension ref="[^"]*"\/>/,`<dimension ref="A1:X${bodyEnd}"/>`);
  const date=Math.round((Date.parse(d.date+'T00:00:00Z')-Date.UTC(1899,11,30))/86400000);
  for(const [ref,v] of Object.entries({H5:d.number||'',H6:date,P5:d.project||'',P6:d.manager||'',S6:d.delivery||''}))xml=writeCell(xml,ref,v);
  // Update each row independently so large requests do not repeatedly scan the whole sheet.

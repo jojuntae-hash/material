@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as XLSX from 'xlsx';
 import {unzipSync,strFromU8} from 'fflate';
-import {fillRequestTemplate,validateDraft,draftKey,defaultDelivery} from '../src/request-template.js';
+import {fillRequestTemplate,validateDraft,draftKey,defaultDelivery,mergeDraftRows} from '../src/request-template.js';
 import {detectSheet,extractRows} from '../src/excel.js';
 import {parseDraftSheet} from '../src/request-import.js';
 const template=new Uint8Array(fs.readFileSync(new URL('../public/templates/request.xlsx',import.meta.url)));
@@ -15,7 +15,7 @@ test('원본 양식의 병합·서식·인쇄설정을 보존하며 정확한 �
  const before=unzipSync(template),after=unzipSync(bytes);assert.deepEqual(after['xl/styles.xml'],before['xl/styles.xml']);
  assert.equal(Object.keys(before).some(k=>k.startsWith('xl/media/')||k.startsWith('xl/drawings/')),false);
  const xml=strFromU8(after['xl/worksheets/sheet2.xml']),original=strFromU8(before['xl/worksheets/sheet2.xml']);
- for(const tag of ['mergeCells','cols','pageSetup','pageMargins'])assert.equal(xml.match(new RegExp(`<${tag}\\b[\\s\\S]*?(?:</${tag}>|/>)`))[0],original.match(new RegExp(`<${tag}\\b[\\s\\S]*?(?:</${tag}>|/>)`))[0]);
+ for(const tag of ['cols','pageSetup','pageMargins'])assert.equal(xml.match(new RegExp(`<${tag}\\b[\\s\\S]*?(?:</${tag}>|/>)`))[0],original.match(new RegExp(`<${tag}\\b[\\s\\S]*?(?:</${tag}>|/>)`))[0]);
  assert.match(strFromU8(after['xl/workbook.xml']),/\$A\$1:\$T\$42/);
  const info=detectSheet(wb,wb.SheetNames[0]),rows=extractRows(info,{});
  assert.equal(info.warnings.length,0);assert.equal(rows.length,1);
@@ -57,6 +57,20 @@ test('인쇄 밖 위치·신청자·구분의 글꼴·정렬과 잔여 테두리
  const d=draft();d.rows=Array.from({length:25},()=>({...d.rows[0],trade:'소방'}));
  const bytes=fillRequestTemplate(template,d),xml=strFromU8(unzipSync(bytes)['xl/worksheets/sheet2.xml']);
  for(const column of ['U','V','W'])for(let row=12;row<37;row++)assert.match(xml.match(new RegExp(`<c\\b[^>]*r="${column}${row}"[^>]*>`))[0],/ s="1"/);
- assert.match(xml.match(/<c\b[^>]*r="X16"[^>]*>/)[0],/ s="1"/);
+ assert.ok(!xml.includes('r="X16"')||xml.match(/<c\b[^>]*r="X16"[^>]*>/)[0].includes('s="1"'));
  const wb=XLSX.read(bytes);assert.equal(wb.Sheets[wb.SheetNames[0]].W36.v,'소방');
+});
+test('기존 양식 끝부분과 확장 경계에서도 모든 품목의 병합·서식을 유지',()=>{
+ const d=draft();d.rows=Array.from({length:500},()=>({...d.rows[0]}));const bytes=fillRequestTemplate(template,d),wb=XLSX.read(bytes),sheet=wb.Sheets[wb.SheetNames[0]],xml=strFromU8(unzipSync(bytes)['xl/worksheets/sheet2.xml']);
+ for(let n=12;n<=511;n++)for(const [a,b] of [['A','B'],['C','H'],['I','K'],['L','M'],['N','O'],['Q','R']])assert.ok(xml.includes(`ref="${a}${n}:${b}${n}"`));
+ for(const n of [112,113,119,120,121,511]){
+  for(const col of ['A','C','I','L','Q','T']){const style=r=>xml.match(new RegExp(`<c\\b[^>]*r="${col}${r}"[^>]*>`))[0].match(/ s="(\d+)"/)[1];assert.equal(style(n),style(12));}
+  assert.equal(sheet['Q'+n].v,1.25);
+ }
+});
+test('띄어쓰기·줄바꿈·보이지 않는 문자 차이는 합산하되 구분과 단위는 분리',()=>{
+ const row={name:'절연 행거',spec:'D 25',unit:'EA',dealer:'성화 / 대화',trade:'소방',quantity:10};
+ const rows=[row,{...row,name:'절연행거\u200B',spec:'D25',dealer:'성화/대화',quantity:20}];
+ assert.equal(mergeDraftRows(rows).length,1);assert.equal(mergeDraftRows(rows)[0].quantity,30);
+ assert.equal(mergeDraftRows([...rows,{...row,trade:'기계'},{...row,unit:'BOX'}]).length,3);
 });
