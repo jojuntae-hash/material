@@ -9,7 +9,7 @@ export function defaultDelivery(date){
 }
 export function validateDraft(d){
  if(!d.rows.length)throw Error('품목을 하나 이상 추가하세요.');
- if(d.rows.length>109)throw Error('한 청구서에는 최대 109개 품목을 넣을 수 있습니다.');
+ if(d.rows.length>500)throw Error('한 청구서에는 최대 500개 품목을 넣을 수 있습니다.');
  const parsedDate=new Date(d.date+'T00:00:00Z');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date)||!Number.isFinite(parsedDate.getTime())||parsedDate.toISOString().slice(0,10)!==d.date)throw Error('올바른 청구일을 입력하세요.');
  d.rows.forEach((r,i)=>{if(!Number.isFinite(Number(r.quantity))||Number(r.quantity)<=0||Number(r.quantity)>1e12)throw Error(`${i+1}번 수량은 0보다 큰 숫자로 입력하세요.`);});
@@ -45,9 +45,26 @@ function writeCell(xml,ref,value){
 }
 export function fillRequestTemplate(bytes,d){
  validateDraft(d);const original=d;d={...d,rows:d.mergeItems?mergeDraftRows(d.rows):d.rows};const files=unzipSync(bytes);let xml=strFromU8(files['xl/worksheets/sheet2.xml']);
+ const lastRow=d.rows.length+11;
+ if(lastRow>120){
+  const prototype=xml.match(/<row\b[^>]*\br="12"[^>]*>[\s\S]*?<\/row>/)[0];
+  let added='',merges='';
+  for(let row=121;row<=lastRow;row++){
+   added+=prototype.replace(/\br="([A-Z]*)12"/g,(_,col)=>`r="${col}${row}"`);
+   for(const [a,b] of [['A','B'],['C','H'],['I','K'],['L','M'],['N','O'],['Q','R']])merges+=`<mergeCell ref="${a}${row}:${b}${row}"/>`;
+  }
+  xml=xml.replace('</sheetData>',added+'</sheetData>').replace('</mergeCells>',merges+'</mergeCells>');
+  xml=xml.replace(/<mergeCells count="\d+"/,`<mergeCells count="${(xml.match(/<mergeCell /g)||[]).length}"`);
+  xml=xml.replace(/<dimension ref="[^"]*"\/>/,`<dimension ref="A1:X${lastRow}"/>`);
+ }
  const date=Math.round((Date.parse(d.date+'T00:00:00Z')-Date.UTC(1899,11,30))/86400000);
  for(const [ref,v] of Object.entries({H5:d.number||'',H6:date,P5:d.project||'',P6:d.manager||'',S6:d.delivery||''}))xml=writeCell(xml,ref,v);
- d.rows.forEach((r,i)=>{const n=i+12;for(const [col,v] of Object.entries({A:i+1,C:r.name,I:r.spec,L:r.unit,Q:Number(r.quantity),T:r.dealer,U:r.location,V:r.applicant,W:r.trade}))xml=writeCell(xml,col+n,v);});
+ // Update each row independently so large requests do not repeatedly scan the whole sheet.
+ xml=xml.replace(/<row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/row>/g,(rowXml,n)=>{
+  const index=Number(n)-12,r=d.rows[index];if(!r)return rowXml;
+  for(const [col,v] of Object.entries({A:index+1,C:r.name,I:r.spec,L:r.unit,Q:Number(r.quantity),T:r.dealer,U:r.location,V:r.applicant,W:r.trade}))rowXml=writeCell(rowXml,col+n,v);
+  return rowXml;
+ });
  // Internal tracking columns contain inconsistent legacy fonts and borders.
  // Use the template's plain centered style, including blank X cells beside W.
  xml=xml.replace(/<c\b[^>]*\br="[UVWX](\d+)"[^>]*>/g,(tag,row)=>{

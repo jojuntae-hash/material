@@ -25,7 +25,7 @@ test('수량·필수 입력 검증, 긴 목록 끝행 및 사용자별 임시저
  const d=draft();for(const quantity of ['',0,-1,'abc',Infinity]){d.rows[0].quantity=quantity;assert.throws(()=>validateDraft(d),/수량/);}d.rows[0].quantity=2;
  d.date='2026-02-30';assert.throws(()=>validateDraft(d),/청구일/);d.date='2026-10-24';
  d.rows[0].dealer='';d.rows[0].location='';d.rows[0].applicant='';assert.doesNotThrow(()=>validateDraft(d));
- d.rows=Array.from({length:109},()=>({...d.rows[0]}));const wb=XLSX.read(fillRequestTemplate(template,d));assert.equal(wb.Sheets[wb.SheetNames[0]].Q120.v,2);d.rows.push({...d.rows[0]});assert.throws(()=>validateDraft(d),/109/);
+ d.rows=Array.from({length:500},()=>({...d.rows[0]}));const wb=XLSX.read(fillRequestTemplate(template,d));assert.equal(wb.Sheets[wb.SheetNames[0]].Q511.v,2);assert.equal(wb.Sheets[wb.SheetNames[0]].A511.v,500);assert.ok(wb.Sheets[wb.SheetNames[0]]['!merges'].some(m=>m.s.r===510&&m.s.c===2&&m.e.c===7));assert.equal(parseDraftSheet(wb,wb.SheetNames[0]).rows.length,500);d.rows.push({...d.rows[0]});assert.throws(()=>validateDraft(d),/500/);
  assert.notEqual(draftKey({mode:'cloud',projectId:'a',session:{user:{id:'u'}}}),draftKey({mode:'cloud',projectId:'a',session:{user:{id:'v'}}}));
 });
 test('입고요청일은 2일 뒤, 금요일은 월요일이며 월말과 연말을 처리',()=>{
