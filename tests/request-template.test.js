@@ -81,3 +81,8 @@ test('품명·규격으로 합산하여 공란 보완·여러 내용 병기·단
  const both=mergeDraftRows([...rows,{...row,trade:'소방',quantity:5}]);assert.equal(both.length,3);assert.equal(both.find(r=>r.trade==='소방').quantity,5);assert.equal(both.find(r=>r.trade==='').quantity,1);
  const blankUnit=mergeDraftRows([{...row,unit:''},{...row,unit:'M'}]);assert.equal(blankUnit[0].unit,'M');
 });
+test('청구서 출력만 품명·규격 자연순으로 정렬하고 화면 원본은 유지',()=>{
+ const d=draft();d.rows=[{...d.rows[0],name:'배관',spec:'D100'},{...d.rows[0],name:'가대',spec:'D20'},{...d.rows[0],name:'배관',spec:'D25'}];const before=JSON.stringify(d);
+ for(const mergeItems of [false,true]){const wb=XLSX.read(fillRequestTemplate(template,{...d,mergeItems})),s=wb.Sheets[wb.SheetNames[0]];assert.equal(s.C12.v,'가대');assert.equal(s.I13.v,'D25');assert.equal(s.I14.v,'D100');assert.equal(s.A14.v,3);}
+ assert.equal(JSON.stringify(d),before);
+});

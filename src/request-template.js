@@ -59,7 +59,10 @@ function writeCell(xml,ref,value){
  });
 }
 export function fillRequestTemplate(bytes,d){
- validateDraft(d);const original=d;d={...d,rows:d.mergeItems?mergeDraftRows(d.rows):d.rows};const files=unzipSync(bytes);let xml=strFromU8(files['xl/worksheets/sheet2.xml']);
+ validateDraft(d);const original=d;
+ const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
+ d={...d,rows:[...(d.mergeItems?mergeDraftRows(d.rows):d.rows)].sort((a,b)=>collator.compare(a.name||'',b.name||'')||collator.compare(a.spec||'',b.spec||'')||collator.compare(a.unit||'',b.unit||'')||collator.compare(a.trade||'',b.trade||''))};
+ const files=unzipSync(bytes);let xml=strFromU8(files['xl/worksheets/sheet2.xml']);
  const lastRow=d.rows.length+11;
  // Rebuild every body row from the known-good first row. The source's
  // final pre-existing rows also have missing merges and inconsistent styles.

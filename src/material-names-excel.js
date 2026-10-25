@@ -1,11 +1,12 @@
 import * as XLSX from 'xlsx';
 import {materialNameKey,validateMaterialRules,uniqueMaterialAliases} from './material-names.js';
+import {sortMaterialRules} from './material-rule-order.js';
 const text=v=>String(v??'').trim();
 const heading=v=>text(v).replace(/\s/g,'');
 export function buildMaterialRulesWorkbook(rules){
  const count=Math.max(2,...rules.map(r=>r.aliases.length));
  const headers=[...Array.from({length:count},(_,i)=>`변환 전 품명 ${i+1}`),'변환 후 품명','분류'];
- const rows=rules.map(r=>[...Array.from({length:count},(_,i)=>r.aliases[i]||''),r.target,r.category||'']);
+ const rows=sortMaterialRules(rules,'target','asc').map(r=>[...Array.from({length:count},(_,i)=>r.aliases[i]||''),r.target,r.category||'']);
  const sheet=XLSX.utils.aoa_to_sheet([headers,...rows]);sheet['!cols']=headers.map((_,i)=>({wch:i===headers.length-1?20:35}));sheet['!autofilter']={ref:sheet['!ref']};
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,sheet,'품명 변환 목록');return wb;
 }

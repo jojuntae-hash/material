@@ -20,3 +20,7 @@ test('원본 엑셀 제목·여러 별칭을 읽고 누락 행은 전체 반영 
  const result=parseMaterialRulesSheet(wb,'목록');assert.equal(result[0].aliases.length,4);const round=buildMaterialRulesWorkbook(result);assert.equal(parseMaterialRulesSheet(round,round.SheetNames[0])[0].aliases.length,4);
  wb.Sheets['목록']=XLSX.utils.aoa_to_sheet([['변환 전 품명 1','변환 후 품명'],['A','']]);assert.throws(()=>parseMaterialRulesSheet(wb,'목록'),/2행/);
 });
+test('품목관리 엑셀은 변환 후 품명순으로 출력하고 관리 순서는 유지',()=>{
+ const rules=[{aliases:['A'],target:'자재10',category:''},{aliases:['B'],target:'자재2',category:''},{aliases:['C'],target:'가대',category:''}],before=JSON.stringify(rules);
+ const wb=buildMaterialRulesWorkbook(rules),rows=parseMaterialRulesSheet(wb,wb.SheetNames[0]);assert.deepEqual(rows.map(r=>r.target),['가대','자재2','자재10']);assert.equal(JSON.stringify(rules),before);
+});
