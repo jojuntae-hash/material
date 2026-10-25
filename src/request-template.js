@@ -16,10 +16,25 @@ export function validateDraft(d){
 }
 const xmlEscape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 export function mergeDraftRows(rows){
- const groups=new Map(),norm=v=>String(v??'').normalize('NFKC').replace(/[\s\u200B-\u200D\u2060\uFEFF]+/g,'').toUpperCase();
- for(const row of rows){const key=JSON.stringify(['name','spec','unit','dealer','trade'].map(k=>norm(row[k])));if(!groups.has(key))groups.set(key,{...row,quantity:0,locations:[],applicants:[],notes:[]});const g=groups.get(key);g.quantity=Number((g.quantity+Number(row.quantity)).toPrecision(15));if(row.location&&!g.locations.includes(row.location))g.locations.push(row.location);if(row.applicant&&!g.applicants.includes(row.applicant))g.applicants.push(row.applicant);if(row.note&&!g.notes.includes(row.note))g.notes.push(row.note);}
- return [...groups.values()].map(({locations,applicants,notes,...r})=>({...r,location:locations.join(' / '),applicant:applicants.join(' / '),note:notes.join(' / ')}));
+ const norm=v=>String(v??'').normalize('NFKC').replace(/[\s\u200B-\u200D\u2060\uFEFF]+/g,'').toUpperCase();
+ const materialKey=(r,i)=>JSON.stringify([norm(r.name),norm(r.spec),norm(r.name)?'':i]);
+ const trades=new Map();
+ rows.forEach((r,i)=>{const key=materialKey(r,i);if(!trades.has(key))trades.set(key,new Set());if(norm(r.trade))trades.get(key).add(norm(r.trade));});
+ const groups=new Map();
+ rows.forEach((row,i)=>{
+  const base=materialKey(row,i),known=trades.get(base),trade=norm(row.trade)||(known.size===1?[...known][0]:'');
+  const key=JSON.stringify([base,trade]);
+  if(!groups.has(key))groups.set(key,{row:{...row,trade},quantity:0,values:Object.fromEntries(['unit','dealer','location','applicant','note'].map(k=>[k,new Map()]))});
+  const g=groups.get(key);g.quantity=Number((g.quantity+Number(row.quantity)).toPrecision(15));
+  for(const field of Object.keys(g.values)){const value=String(row[field]??'').trim(),key=norm(value);if(key&&!g.values[field].has(key))g.values[field].set(key,value);}
+ });
+ return [...groups.values()].map(g=>{
+  const result={...g.row,quantity:g.quantity};
+  for(const [field,values] of Object.entries(g.values))result[field]=field==='unit'?(values.size>1?'EA':[...values.values()][0]||''):[...values.values()].join(' / ');
+  return result;
+ });
 }
+
 function addDetailSheet(files,d){
  const fields=['trade','date','name','spec','unit','quantity','dealer','location','applicant','note'];
  const rows=[['분류','날짜','품명','규격','단위','수량','대리점','작업위치','신청자','메모'],...d.rows.map(r=>fields.map(k=>k==='date'?d.date:k==='quantity'?Number(r[k]):r[k]||''))];

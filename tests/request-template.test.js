@@ -35,12 +35,12 @@ test('입고요청일은 2일 뒤, 금요일은 월요일이며 월말과 연말
  assert.equal(defaultDelivery('2026-12-31'),'2027-01-02');
  assert.equal(defaultDelivery('2026-10-30'),'2026-11-02');
 });
-test('합산 선택 시 위치별 원본 보존, 공급업체·단위·공종 차이는 분리',()=>{
+test('합산 선택 시 위치별 원본 보존, 대리점·단위는 합산하고 공종은 분리',()=>{
  const d=draft();d.rows=[{...d.rows[0],quantity:10,location:'1번 스튜디오'},{...d.rows[0],quantity:10,location:'2번 스튜디오'}];
  const before=JSON.stringify(d);let wb=XLSX.read(fillRequestTemplate(template,d));assert.equal(wb.Sheets[wb.SheetNames[0]].Q12.v,10);assert.equal(wb.Sheets[wb.SheetNames[0]].Q13.v,10);
  d.mergeItems=true;wb=XLSX.read(fillRequestTemplate(template,d));const form=wb.Sheets[wb.SheetNames[0]];assert.equal(form.Q12.v,20);assert.equal(form.Q13,undefined);assert.match(form.U12.v,/1번 스튜디오.*2번 스튜디오/);
  const detail=parseDraftSheet(wb,'작성 상세내역');assert.equal(detail.rows.length,2);assert.equal(detail.rows[1].location,'2번 스튜디오');assert.equal(detail.rows[1].quantity,10);delete d.mergeItems;assert.equal(JSON.stringify(d),before);
- d.mergeItems=true;d.rows.push({...d.rows[0],dealer:'다른 업체'},{...d.rows[0],unit:'BOX'},{...d.rows[0],trade:'소방'});wb=XLSX.read(fillRequestTemplate(template,d));assert.equal(wb.Sheets[wb.SheetNames[0]].Q15.v,10);
+ d.mergeItems=true;d.rows.push({...d.rows[0],dealer:'다른 업체'},{...d.rows[0],unit:'BOX'},{...d.rows[0],trade:'소방'});wb=XLSX.read(fillRequestTemplate(template,d));assert.equal(wb.Sheets[wb.SheetNames[0]].Q12.v,40);assert.equal(wb.Sheets[wb.SheetNames[0]].L12.v,'EA');assert.equal(wb.Sheets[wb.SheetNames[0]].Q13.v,10);
 });
 test('위치·신청자는 중복 없이 합치고 기계·소방 수량은 각각 유지',()=>{
  const d=draft();d.mergeItems=true;d.rows=[
@@ -68,9 +68,16 @@ test('기존 양식 끝부분과 확장 경계에서도 모든 품목의 병합�
   assert.equal(sheet['Q'+n].v,1.25);
  }
 });
-test('띄어쓰기·줄바꿈·보이지 않는 문자 차이는 합산하되 구분과 단위는 분리',()=>{
+test('띄어쓰기·줄바꿈·보이지 않는 문자 차이는 합산하되 공종은 분리하고 단위 차이는 EA',()=>{
  const row={name:'절연 행거',spec:'D 25',unit:'EA',dealer:'성화 / 대화',trade:'소방',quantity:10};
  const rows=[row,{...row,name:'절연행거\u200B',spec:'D25',dealer:'성화/대화',quantity:20}];
  assert.equal(mergeDraftRows(rows).length,1);assert.equal(mergeDraftRows(rows)[0].quantity,30);
- assert.equal(mergeDraftRows([...rows,{...row,trade:'기계'},{...row,unit:'BOX'}]).length,3);
+ assert.equal(mergeDraftRows([...rows,{...row,trade:'기계'},{...row,unit:'BOX'}]).length,2);
+});
+test('품명·규격으로 합산하여 공란 보완·여러 내용 병기·단위 차이 EA 처리',()=>{
+ const row={name:'PVC관 (VG2)',spec:'D35',unit:'본',quantity:1,trade:'',dealer:'',location:'',applicant:'',note:''};
+ const rows=[row,{...row,quantity:7,trade:'기계',dealer:'두리/연수',location:'지하',applicant:'김',note:'확인'},{...row,quantity:2,trade:'기계',unit:'EA',dealer:'다른 업체',location:'2층',applicant:'박',note:'추가'}];
+ const before=JSON.stringify(rows),result=mergeDraftRows(rows);assert.equal(result.length,1);assert.equal(result[0].quantity,10);assert.equal(result[0].unit,'EA');assert.equal(result[0].trade,'기계');assert.equal(result[0].dealer,'두리/연수 / 다른 업체');assert.equal(result[0].location,'지하 / 2층');assert.equal(result[0].applicant,'김 / 박');assert.equal(result[0].note,'확인 / 추가');assert.equal(JSON.stringify(rows),before);
+ const both=mergeDraftRows([...rows,{...row,trade:'소방',quantity:5}]);assert.equal(both.length,3);assert.equal(both.find(r=>r.trade==='소방').quantity,5);assert.equal(both.find(r=>r.trade==='').quantity,1);
+ const blankUnit=mergeDraftRows([{...row,unit:''},{...row,unit:'M'}]);assert.equal(blankUnit[0].unit,'M');
 });
