@@ -1,0 +1,266 @@
+[
+  {
+    "id": "seed-1",
+    "aliases": [
+      "PVC관 (VG2)"
+    ],
+    "target": "PVC관 (VG2)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-2",
+    "aliases": [
+      "PVC관 (이중관)"
+    ],
+    "target": "PVC관 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-3",
+    "aliases": [
+      "HIVP관"
+    ],
+    "target": "PVC관 (HIVP)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-4",
+    "aliases": [
+      "HIVP 90엘보"
+    ],
+    "target": "PVC 엘보(HIVP)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-5",
+    "aliases": [
+      "HIVP 45엘보"
+    ],
+    "target": "PVC 45˚엘보(HIVP)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-6",
+    "aliases": [
+      "PVC 엘보 90°(DTS)"
+    ],
+    "target": "PVC 엘보 (DTS,VG2)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-7",
+    "aliases": [
+      "PVC 엘보 45°(DTS)"
+    ],
+    "target": "PVC 45˚엘보 (DTS,VG2)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-8",
+    "aliases": [
+      "PVC 이중관 엘보 90°"
+    ],
+    "target": "PVC 엘보 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-9",
+    "aliases": [
+      "PVC 이중관 엘보 45°"
+    ],
+    "target": "PVC 45˚엘보 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-10",
+    "aliases": [
+      "PVC 이중관 P트랩"
+    ],
+    "target": "PVC P트랩 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-11",
+    "aliases": [
+      "PVC 이중관 레듀샤"
+    ],
+    "target": "PVC 레듀샤 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-12",
+    "aliases": [
+      "PVC 이중관 소켓"
+    ],
+    "target": "PVC 소켓 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-13",
+    "aliases": [
+      "PVC 이중관 YT관"
+    ],
+    "target": "PVC YT관 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-14",
+    "aliases": [
+      "PVC 이중관 CYT관"
+    ],
+    "target": "PVC CYT관 (NC1)",
+    "category": "PVC자재"
+  },
+  {
+    "id": "seed-15",
+    "aliases": [
+      "엘보 (SR)"
+    ],
+    "target": "엘보 (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-16",
+    "aliases": [
+      "45˚엘보 (SR)"
+    ],
+    "target": "45˚엘보 (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-17",
+    "aliases": [
+      "암아답타소켓 (SR)"
+    ],
+    "target": "암아답타소켓  (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-18",
+    "aliases": [
+      "숫아답타소켓 (SR)"
+    ],
+    "target": "숫아답타소켓  (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-19",
+    "aliases": [
+      "후렌지 (SR)"
+    ],
+    "target": "후렌지 (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-20",
+    "aliases": [
+      "티이 (SR)"
+    ],
+    "target": "티이 (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-21",
+    "aliases": [
+      "레듀샤 (SR)"
+    ],
+    "target": "레듀샤 (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-22",
+    "aliases": [
+      "캡 (SR)"
+    ],
+    "target": "캡 (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-23",
+    "aliases": [
+      "소켓 (SR)"
+    ],
+    "target": "소켓  (SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-24",
+    "aliases": [
+      "K-유니온 (SR)"
+    ],
+    "target": "허브 유니온(SH,위생용)",
+    "category": "SR,SH 자재"
+  },
+  {
+    "id": "seed-25",
+    "aliases": [
+      "PB관"
+    ],
+    "target": "PB관(급수·급탕용)",
+    "category": "PB 자재"
+  },
+  {
+    "id": "seed-26",
+    "aliases": [
+      "PB M밸브소켓"
+    ],
+    "target": "PB M밸브소켓",
+    "category": "PB 자재"
+  },
+  {
+    "id": "seed-27",
+    "aliases": [
+      "PB F밸브소켓"
+    ],
+    "target": "PB F밸브소켓",
+    "category": "PB 자재"
+  },
+  {
+    "id": "seed-28",
+    "aliases": [
+      "PB S스리브"
+    ],
+    "target": "PB S스리브",
+    "category": "PB 자재"
+  },
+  {
+    "id": "seed-29",
+    "aliases": [
+      "PB 원형수전박스"
+    ],
+    "target": "PB 원형수전박스",
+    "category": "PB 자재"
+  },
+  {
+    "id": "seed-30",
+    "aliases": [
+      "일반행가(전산볼트)"
+    ],
+    "target": "일반행가",
+    "category": "찬넬자재"
+  },
+  {
+    "id": "seed-31",
+    "aliases": [
+      "절연행가(전산볼트)"
+    ],
+    "target": "절연행가",
+    "category": "찬넬자재"
+  },
+  {
+    "id": "seed-32",
+    "aliases": [
+      "보온용 볼밸브"
+    ],
+    "target": "볼밸브 (보온용,냉온수.10Kg)",
+    "category": "밸브자재"
+  },
+  {
+    "id": "seed-33",
+    "aliases": [
+      "관보온(아티론+보루지+매직)"
+    ],
+    "target": "고무발포보온재",
+    "category": "보온자재"
+  }
+]
