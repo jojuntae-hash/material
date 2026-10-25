@@ -151,7 +151,7 @@ async function saveEditor(form){const fd=new FormData(form),x=editing,d={...x.da
  else await store.save(x.kind,x.id,d,x.version,reason,x.id?'수정':'등록');closeModal(true);render();toast('저장했습니다.');
 }
 
-function selectSheet(name){const info=detectSheet(upload.wb,name);upload={...upload,sheet:name,info,map:{...info.map},trade:info.trade||'',date:info.date||'',confirmed:false,rows:[]};if(info.supported)upload.rows=extractRows(info,{records:store.records,filename:upload.filename});}
+function selectSheet(name){const info=detectSheet(upload.wb,name,upload.filename);upload={...upload,sheet:name,info,map:{...info.map},trade:info.trade||'',date:info.date||'',confirmed:false,rows:[]};if(info.supported)upload.rows=extractRows(info,{records:store.records,filename:upload.filename});}
 async function loadExcel(file){validateUploadFiles([file]);const hash=await sha256(await file.arrayBuffer());if(store.files.some(f=>f.type==='upload'&&f.hash===hash))throw Error('이미 등록한 파일입니다. 가져오기 이력에서 보류 내역을 확인하세요.');const wb=await readWorkbook(file);upload={file,filename:file.name,hash,wb};const sheet=wb.SheetNames.includes('작성 상세내역')?'작성 상세내역':wb.SheetNames.find(n=>!(/삭제|재청구|취소/.test(n))&&detectSheet(wb,n).supported)||wb.SheetNames[0];selectSheet(sheet);view='upload';render();}
 async function commitUpload(){
  const selected=upload.rows.filter(r=>r.selected),pending=upload.rows.filter(r=>!r.selected);for(const r of selected)validateRecord('request',r.data);

@@ -1,8 +1,9 @@
+import {inferRequestTrade} from './core.js';
 import * as XLSX from 'xlsx';
 const text=v=>String(v??'').trim();
 const heading=v=>text(v).replace(/\s+/g,'');
-const aliases={name:['품명'],spec:['규격'],unit:['단위'],quantity:['청구물량','청구수량','수량'],dealer:['대리점'],location:['작업위치'],applicant:['신청자'],trade:['구분','공종','분류','소방·기계구분']};
-export function parseDraftSheet(workbook,sheetName){
+const aliases={name:['품명'],spec:['규격'],unit:['단위'],quantity:['청구물량','청구수량','수량'],dealer:['대리점'],location:['작업위치'],applicant:['신청자'],note:['메모','비고'],trade:['구분','공종','분류','소방·기계구분']};
+export function parseDraftSheet(workbook,sheetName,filename=''){
  const sheet=workbook.Sheets[sheetName];if(!sheet)throw Error('시트를 찾을 수 없습니다.');
  const data=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',blankrows:true});
  if(data.length>10000)throw Error('시트는 10,000행 이하만 지원합니다.');
@@ -16,13 +17,14 @@ export function parseDraftSheet(workbook,sheetName){
   if(columns.length>1)throw Error(`‘${names[0]}’에 해당하는 열이 여러 개입니다. 열 제목을 확인하세요.`);
   map[field]=columns[0]??-1;
  }
- if(form){Object.assign(map,{name:2,spec:8,unit:11,quantity:16,location:20,applicant:21,trade:22});map.dealer=19;}
+ if(form){Object.assign(map,{name:2,spec:8,unit:11,quantity:16,location:20,applicant:21,trade:heading(data[header+1]?.[22])==='구분'?22:-1,note:['메모','비고'].includes(heading(data[header+1]?.[22]))?22:-1});map.dealer=19;}
  const rows=[];let skipped=0;
  for(let i=header+(form?4:1);i<data.length;i++){
   const source=data[i];if(!source.some(v=>text(v)))continue;
   const get=k=>map[k]<0?'':source[map[k]]??'';
   if(!text(get('name'))){skipped++;continue;}if(heading(get('name'))==='품명')continue;
   const row=Object.fromEntries(Object.keys(aliases).map(k=>[k,text(get(k))]));
+  if(!row.trade)row.trade=inferRequestTrade(form?data[4]?.[7]:'',filename);
   const qty=get('quantity');row.quantity=typeof qty==='number'?qty:text(qty).replace(/,/g,'');
   rows.push(row);
  }

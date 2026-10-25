@@ -1,3 +1,4 @@
+import {inferRequestTrade} from './core.js';
 import * as XLSX from 'xlsx';
 import {clean,uuid,resolveVendors,fingerprint,validateRecord} from './core.js';
 import {resolveColumns} from './vendors.js';
@@ -8,18 +9,19 @@ export function excelDate(value,date1904=false){
  const m=String(value||'').match(/(20\d{2})[.\-/년\s]+(\d{1,2})[.\-/월\s]+(\d{1,2})/);return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:'';
 }
 export async function readWorkbook(file){if(file.size>15*1024*1024)throw Error('엑셀은 15MB 이하로 선택하세요.');if(!/\.xlsx$/i.test(file.name))throw Error('.xlsx 형식만 지원합니다.');const bytes=await file.arrayBuffer();const wb=XLSX.read(bytes,{type:'array',cellDates:false,sheetRows:10001});return wb;}
-export function detectSheet(wb,name){
+export function detectSheet(wb,name,filename=''){
  const s=wb.Sheets[name],rows=XLSX.utils.sheet_to_json(s,{header:1,defval:'',blankrows:true});
  if(rows.length>10000)throw Error('시트는 10,000행 이하만 처리할 수 있습니다.');
  const header=rows.findIndex(r=>r.some(v=>clean(v)==='품명')&&r.some(v=>/^(규격|규 격)$/.test(clean(v))));
  if(header<0)return {supported:false,rows,name};
  const headers=rows[header].map(clean);const form=headers.includes('번호')&&header>0;
  const column=(names,fallback)=>{const n=headers.findIndex(v=>names.includes(v));return n<0?fallback:n;};
- const map=form?{name:2,spec:8,unit:11,quantity:16,note:19,location:20,applicant:21,trade:-1,date:-1,manufacturer:-1,dealer:-1}:{name:column(['품명'],2),spec:column(['규격'],3),unit:column(['단위'],4),quantity:column(['수량','청구수량'],5),note:column(['비고'],6),trade:column(['분류','소방·기계 구분'],0),date:column(['날짜','청구일'],1),manufacturer:column(['원자재'],-1),dealer:column(['대리점'],-1),location:column(['작업위치'],-1),applicant:column(['신청자'],-1)};
+ const map=form?{name:2,spec:8,unit:11,quantity:16,note:19,location:20,applicant:21,trade:-1,date:-1,manufacturer:-1,dealer:-1}:{name:column(['품명'],2),spec:column(['규격'],3),unit:column(['단위'],4),quantity:column(['수량','청구수량'],5),note:column(['비고','메모'],6),trade:column(['분류','소방·기계 구분'],0),date:column(['날짜','청구일'],1),manufacturer:column(['원자재'],-1),dealer:column(['대리점'],-1),location:column(['작업위치'],-1),applicant:column(['신청자'],-1)};
  // New request forms retain per-row trade outside the printed area.
  if(form&&clean(rows[header+1]?.[22])==='구분')map.trade=22;
  if(form&&headers[19]==='대리점'){map.dealer=19;map.note=-1;}
- const docNo=form?clean(rows[4]?.[7]):'';const trade=docNo.includes('소방')?'소방':docNo.includes('기계')?'기계':'';
+ if(form&&['메모','비고'].includes(clean(rows[header+1]?.[22])))map.note=22;
+ const docNo=form?clean(rows[4]?.[7]):'';const trade=inferRequestTrade(docNo,filename);
  const date=form?excelDate(rows[5]?.[7],wb.Workbook?.WBProps?.date1904):'';
  const candidates=rows.map((r,i)=>({r,i})).filter(({r,i})=>i>header&&clean(r[map.name])&&(!form||typeof r[0]==='number'));
  const warnings=[];

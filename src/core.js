@@ -2,6 +2,7 @@ import {validateReceipts} from './receipts.js';
 import {splitVendorNote} from './vendors.js';
 export const uuid=()=>crypto.randomUUID();
 export const clean=v=>String(v??'').trim().replace(/\s+/g,' ');
+export function inferRequestTrade(...sources){for(const source of sources){const value=String(source||'');const mechanical=value.includes('기계'),fire=value.includes('소방');if(mechanical&&fire)return '';if(mechanical)return '기계';if(fire)return '소방';}return '';}
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const label={request:'청구내역',vendor:'업체연락처',approval:'자재승인목록',alias:'업체 별칭'};
 export const number=v=>v===null||v===''||v===undefined?'—':Number(v).toLocaleString('ko-KR',{maximumFractionDigits:5});
