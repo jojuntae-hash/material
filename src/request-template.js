@@ -1,4 +1,5 @@
 import {zipSync,unzipSync,strToU8,strFromU8} from 'fflate';
+import {materialCategory} from './material-names.js';
 
 export const draftKey=s=>`mm-request-draft-v1:${s.mode}:${s.projectId}:${s.session?.user?.id||''}`;
 export function defaultDelivery(date){
@@ -58,10 +59,11 @@ function writeCell(xml,ref,value){
   return a+cells.sort((x,y)=>col(x)-col(y)).join('')+c;
  });
 }
-export function fillRequestTemplate(bytes,d){
+export function fillRequestTemplate(bytes,d,rules=[]){
  validateDraft(d);const original=d;
  const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
- d={...d,rows:[...(d.mergeItems?mergeDraftRows(d.rows):d.rows)].sort((a,b)=>collator.compare(a.name||'',b.name||'')||collator.compare(a.spec||'',b.spec||'')||collator.compare(a.unit||'',b.unit||'')||collator.compare(a.trade||'',b.trade||''))};
+ const categoryOrder=(a,b)=>{const x=materialCategory(a.name,rules),y=materialCategory(b.name,rules);return !x||!y?(!x&&!y?0:!x?1:-1):collator.compare(x,y);};
+ d={...d,rows:[...(d.mergeItems?mergeDraftRows(d.rows):d.rows)].sort((a,b)=>categoryOrder(a,b)||collator.compare(a.name||'',b.name||'')||collator.compare(a.spec||'',b.spec||'')||collator.compare(a.unit||'',b.unit||'')||collator.compare(a.trade||'',b.trade||''))};
  const files=unzipSync(bytes);let xml=strFromU8(files['xl/worksheets/sheet2.xml']);
  const lastRow=d.rows.length+11;
  // Rebuild every body row from the known-good first row. The source's

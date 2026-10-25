@@ -4,6 +4,12 @@ export const materialNameKey=value=>String(value??'').replace(/[°˚º]/g,'').no
 export function uniqueMaterialAliases(values){const seen=new Set();return values.map(v=>String(v??'').trim()).filter(v=>{const key=materialNameKey(v);if(!key||seen.has(key))return false;seen.add(key);return true;});}
 export function materialRulesRecord(store){return store.records.find(r=>r.id===materialRulesId&&r.kind==='batch'&&!r.deleted&&r.data.type==='material-name-rules');}
 export function materialRules(store){return materialRulesRecord(store)?.data.rules??defaults;}
+export function materialCategory(name,rules){
+ const key=materialNameKey(name);if(!key)return '';
+ const targets=rules.filter(r=>materialNameKey(r.target)===key);
+ const matches=targets.length?targets:rules.filter(r=>r.aliases.some(a=>materialNameKey(a)===key));
+ return String(matches.find(r=>String(r.category||'').trim())?.category||'').trim();
+}
 export function validateMaterialRules(rules){
  const seen=new Map();
  for(const r of rules){

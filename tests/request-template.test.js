@@ -86,3 +86,9 @@ test('청구서 출력만 품명·규격 자연순으로 정렬하고 화면 원
  for(const mergeItems of [false,true]){const wb=XLSX.read(fillRequestTemplate(template,{...d,mergeItems})),s=wb.Sheets[wb.SheetNames[0]];assert.equal(s.C12.v,'가대');assert.equal(s.I13.v,'D25');assert.equal(s.I14.v,'D100');assert.equal(s.A14.v,3);}
  assert.equal(JSON.stringify(d),before);
 });
+test('청구서 출력은 현재 품목관리 분류→품명→규격 순, 분류 미등록은 마지막',()=>{
+ const d=draft();d.rows=[{...d.rows[0],name:'가엘보',spec:'D10'},{...d.rows[0],name:'미등록품목',spec:'D10'},{...d.rows[0],name:'PVC관',spec:'D100'},{...d.rows[0],name:'PVC관',spec:'D25'},{...d.rows[0],name:'PVC엘보',spec:'D10'}];
+ const rules=[{id:'s',aliases:['가엘보'],target:'가엘보',category:'SH자재'},{id:'p',aliases:['PVC관'],target:'PVC관',category:'PVC자재'},{id:'e',aliases:['옛엘보'],target:'PVC엘보',category:'PVC자재'}],before=JSON.stringify(d);
+ for(const mergeItems of [false,true]){const wb=XLSX.read(fillRequestTemplate(template,{...d,mergeItems},rules)),s=wb.Sheets[wb.SheetNames[0]];assert.deepEqual([s.C12.v,s.C13.v,s.C14.v,s.C15.v,s.C16.v],['PVC관','PVC관','PVC엘보','가엘보','미등록품목']);assert.equal(s.I12.v,'D25');assert.equal(s.I13.v,'D100');}
+ assert.equal(JSON.stringify(d),before);
+});
