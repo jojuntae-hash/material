@@ -1,3 +1,4 @@
+import {toolSummary} from './tool-ledger-core.js';
 import {validateReceipts} from './receipts.js';
 import {splitVendorNote} from './vendors.js';
 export const uuid=()=>crypto.randomUUID();
@@ -7,6 +8,7 @@ export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 export const label={request:'청구내역',vendor:'업체연락처',approval:'자재승인목록',alias:'업체 별칭'};
 export const number=v=>v===null||v===''||v===undefined?'—':Number(v).toLocaleString('ko-KR',{maximumFractionDigits:5});
 export function validateRecord(kind,d){
+ if(kind==='batch'&&d.type==='tool-ledger')toolSummary(d);
  if(kind==='request'){
   validateReceipts(d);
   if(!['기계','소방'].includes(d.trade))throw Error('기계 또는 소방을 선택하세요.');
