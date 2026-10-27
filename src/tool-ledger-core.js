@@ -11,3 +11,10 @@ export function toolSummary(data){
  return {stock:stock/scale,received:received/scale,issued:issued/scale,returned:returned/scale,lastReceived,holders:[...holders].filter(([,q])=>q>0).map(([person,q])=>({person,quantity:q/scale})),active,cancelled};
 }
 export function addToolEvent(data,event){const next={...data,events:[...(data.events||[]),event]};toolSummary(next);return next;}
+export function editToolEvent(data,eventId,replacement,cancellation){
+ const summary=toolSummary(data),index=(data.events||[]).findIndex(x=>x.id===eventId),old=data.events[index];
+ if(!old||old.type==='cancel'||summary.cancelled.has(eventId))throw Error('수정할 수 없는 기록입니다.');
+ if(replacement.type!==old.type||cancellation.type!=='cancel'||cancellation.eventId!==eventId)throw Error('수정 기록의 종류를 확인하세요.');
+ const events=[...data.events];events.splice(index+1,0,replacement);events.push(cancellation);
+ const next={...data,events};toolSummary(next);return next;
+}
