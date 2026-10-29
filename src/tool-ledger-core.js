@@ -3,6 +3,7 @@ const personKey=v=>String(v||'').trim().replace(/\s+/g,' ');
 const validDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')&&Number.isFinite(Date.parse(d+'T00:00:00Z'))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d;
 export function toolSummary(data){
  if(!data.name?.trim())throw Error('공도구 품명을 확인하세요.');
+ if(data.photos!==undefined&&(!Array.isArray(data.photos)||data.photos.length>8||data.photos.some(p=>!p||typeof p.name!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(p.url||''))||data.photos.reduce((n,p)=>n+p.url.length,0)>4*1024*1024))throw Error('공도구 사진은 JPEG 형식 8장, 전체 4MB 이하로 저장하세요.');
  const events=data.events||[],ids=new Set(),cancelled=new Set();
  for(const x of events){if(!x.id||ids.has(x.id))throw Error('중복된 기록입니다.');ids.add(x.id);if(x.type==='cancel'){const target=events.find(y=>y.id===x.eventId);if(!target||target.type==='cancel'||cancelled.has(x.eventId)||!x.reason?.trim())throw Error('취소 대상과 사유를 확인하세요.');cancelled.add(x.eventId);}else{if(!['receive','issue','return'].includes(x.type)||!validDate(x.date)||!Number.isFinite(x.quantity)||x.quantity<=0||!Number.isSafeInteger(Math.round(x.quantity*scale))||Math.abs(x.quantity*scale-Math.round(x.quantity*scale))>0.00001)throw Error('날짜와 양수 수량(소수 다섯 자리 이하)을 확인하세요.');if(x.type!=='receive'&&!personKey(x.person))throw Error('수령자 이름을 입력하세요.');}}
  const active=events.filter(x=>x.type!=='cancel'&&!cancelled.has(x.id)).sort((a,b)=>a.date.localeCompare(b.date));

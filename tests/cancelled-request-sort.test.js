@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {sortCancelledRequests} from '../src/cancelled-request-sort.js';
+const rows=[{id:'a',data:{trade:'소방',name:'배관',spec:'D100',quantity:105,date:'2026-10-29',requestCancellation:{at:'2026-10-29T01:00:00Z'}}},{id:'b',data:{trade:'기계',name:'강관',spec:'D25',quantity:24,date:'2026-10-26',requestCancellation:{at:'2026-10-29T11:00:00+09:00'}}},{id:'c',data:{trade:'기계',name:'강관',spec:'',quantity:null,date:''}}];
+test('취소 목록 각 열의 자연순·숫자순·취소 시각순 및 공란 마지막',()=>{const before=JSON.stringify(rows),ids=options=>sortCancelledRequests(rows,options).map(r=>r.id);assert.deepEqual(ids(),['b','a','c']);assert.deepEqual(ids({key:'quantity',direction:'asc'}),['b','a','c']);assert.deepEqual(ids({key:'quantity',direction:'desc'}),['a','b','c']);assert.deepEqual(ids({key:'spec',direction:'asc'}),['b','a','c']);assert.deepEqual(ids({key:'name',direction:'asc'}),['b','c','a']);assert.deepEqual(ids({key:'trade',direction:'asc'}),['b','c','a']);assert.deepEqual(ids({key:'date',direction:'desc'}),['a','b','c']);assert.equal(JSON.stringify(rows),before);});
