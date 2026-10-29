@@ -100,7 +100,7 @@ function detail(id){const r=store.records.find(r=>r.id===id);if(!r)return;const 
  if(kind==='vendor'&&d.contacts?.length)body+=`<div class="source"><h3>추가 담당자</h3>${d.contacts.map(c=>`<div class="file-row"><div><b>${e(c.name||'담당자')}</b><p>${e(c.phone||'전화 미등록')}<br>${e(c.email||'이메일 미등록')}</p></div>${c.phone?`<a class="btn secondary" href="tel:${e(c.phone.replace(/[^+\d]/g,''))}">전화</a>`:''}${c.email?`<a class="btn secondary" href="mailto:${e(c.email)}">메일</a>`:''}</div>`).join('')}</div>`;
  showDialog(`<div class="modal-body ${kind==='request'?'request-detail':''}">${body}<div class="dialog-actions detail-footer">${canEdit()&&!(kind==='request'&&requestInactive(d))?btn(icon('edit')+' 수정','edit','primary',`data-id="${id}"`):''}${btn(icon('history')+' 변경 이력','item-history','secondary',`data-id="${id}"`)}${kind==='request'?requestStateActions(r):''}</div></div>`);
 }
-function input(name,title,value,type='text',required=false){return `<label>${title}<input type="${type}" name="${name}" value="${e(value??'')}" ${required?'required':''} ${type==='number'?'step="any" min="0"':''}></label>`;}
+function input(name,title,value,type='text',required=false){return `<label>${title}<input type="${type}" name="${name}" value="${e(value??'')}" ${required?'required':''} ${type==='number'?'step="1" min="0"':''}></label>`;}
 let contactEditing=null;
 function contactDetail(ownerId,contactId){
  const c=contactList(store.records).find(c=>c.ownerId===ownerId&&c.id===contactId);if(!c)return;
@@ -296,7 +296,7 @@ function receiptForm(id,receiptId=''){
  if(!canEdit())throw Error('조회 권한으로는 변경할 수 없습니다.');
  const r=store.records.find(x=>x.id===id&&!x.deleted&&x.kind==='request');if(!r)throw Error('청구내역을 찾을 수 없습니다.');
  if(requestInactive(r.data))throw Error('취소·삭제된 청구는 입고 처리할 수 없습니다.');const s=receiptSummary(r.data);receiptDraft={id,version:r.version,receiptId};
- showDialog(`<div class="modal-body"><h2>${receiptId?'입고 취소':'입고확인'}</h2><p>${e(r.data.name)} · ${e(r.data.spec)}<br>작업위치: ${e(r.data.location||'미등록')}</p><p>청구 ${number(r.data.quantity)} · 누적 입고 ${number(s.received)} · 미입고 ${number(s.remaining)} ${e(r.data.unit)}</p><form id="receipt-form">${receiptId?'<label>취소 사유<input name="reason" required maxlength="500" placeholder="예: 다른 자재를 잘못 입고 처리함"></label>':`<label>이번 입고수량 (${e(r.data.unit)})<input name="quantity" type="number" required min="0.00001" max="${s.remaining}" step="0.00001" value="${s.remaining}"></label>`}<p>다음 화면에서 내용을 확인한 뒤 확정해야 저장됩니다.</p><div class="dialog-actions">${btn('돌아가기','receipt-back','secondary',`data-id="${id}"`)}<button class="btn primary" type="submit">내용 확인</button></div></form></div>`);
+ showDialog(`<div class="modal-body"><h2>${receiptId?'입고 취소':'입고확인'}</h2><p>${e(r.data.name)} · ${e(r.data.spec)}<br>작업위치: ${e(r.data.location||'미등록')}</p><p>청구 ${number(r.data.quantity)} · 누적 입고 ${number(s.received)} · 미입고 ${number(s.remaining)} ${e(r.data.unit)}</p><form id="receipt-form">${receiptId?'<label>취소 사유<input name="reason" required maxlength="500" placeholder="예: 다른 자재를 잘못 입고 처리함"></label>':`<label>이번 입고수량 (${e(r.data.unit)})<input name="quantity" type="number" required min="0" max="${s.remaining}" step="1" value="${s.remaining}"></label>`}<p>다음 화면에서 내용을 확인한 뒤 확정해야 저장됩니다.</p><div class="dialog-actions">${btn('돌아가기','receipt-back','secondary',`data-id="${id}"`)}<button class="btn primary" type="submit">내용 확인</button></div></form></div>`);
  document.querySelector('#receipt-form').addEventListener('input',event=>event.currentTarget.dataset.dirty='yes');
 }
 function previewReceipt(form){
