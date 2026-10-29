@@ -6,7 +6,7 @@ const matchesMaterial=(d,q)=>{const value=[d.name,d.spec,d.unit].join(' ');retur
 const valid=n=>n!==null&&n!==undefined&&String(n).trim()!==''&&Number.isFinite(Number(n));
 export function aggregateMaterials(records,{q='',trade='',start='',end='',sort='name'}={}){
  const groups=new Map();
- for(const r of records){if(r.kind!=='request'||r.deleted)continue;const d=r.data;
+ for(const r of records){if(r.kind!=='request'||r.deleted||r.data.requestArchived||r.data.requestCancellation?.active)continue;const d=r.data;
   if(trade&&d.trade!==trade||start&&d.date<start||end&&d.date>end||q&&!matchesMaterial(d,q))continue;
   const key=materialKey(d);if(!groups.has(key))groups.set(key,{key,name:d.name,spec:d.spec||'',unit:d.unit||'',scaled:0,positiveScaled:0,adjustmentScaled:0,mechanicalScaled:0,fireScaled:0,count:0,missing:0,firstDate:d.date,lastDate:d.date,rows:[]});
   const g=groups.get(key);g.count++;g.rows.push(r);if(d.date<g.firstDate)g.firstDate=d.date;if(d.date>g.lastDate)g.lastDate=d.date;
