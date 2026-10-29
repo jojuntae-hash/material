@@ -31,3 +31,21 @@ export function toolReceiptDays(records){
  const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
  return [...days].sort(([a],[b])=>b.localeCompare(a)).map(([date,rows])=>({date,rows:rows.sort((a,b)=>collator.compare(a.name,b.name)||collator.compare(a.spec,b.spec)||a.eventId.localeCompare(b.eventId))}));
 }
+export const toolReceiptFields=[['name','공구명'],['spec','규격'],['quantity','입고수량'],['date','입고일'],['note','메모']];
+export function toolReceiptRows(records,{key='date',direction='desc'}={}){
+ if(!toolReceiptFields.some(([field])=>field===key))key='date';
+ const rows=toolReceiptDays(records).flatMap(day=>day.rows.map(row=>({...row,date:day.date}))),collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'}),sign=direction==='asc'?1:-1;
+ const blank=v=>v===null||v===undefined||String(v).trim()==='';
+ return rows.sort((a,b)=>{const av=a[key],bv=b[key],ab=blank(av),bb=blank(bv);if(ab!==bb)return ab?1:-1;const result=ab?0:key==='quantity'?av-bv:collator.compare(String(av),String(bv));return result*sign||collator.compare(a.name,b.name)||collator.compare(a.spec,b.spec)||a.toolId.localeCompare(b.toolId)||a.eventId.localeCompare(b.eventId);});
+}
+export const toolMovementFields=[['type','구분'],['name','공구명'],['spec','규격'],['quantity','수량'],['receiveDate','입고일'],['issueDate','지급일'],['returnDate','반납일'],['person','수령자'],['note','메모']];
+export function toolMovementRows(records,{key='date',direction='desc',type=''}={}){
+ if(key!=='date'&&!toolMovementFields.some(([field])=>field===key))key='date';
+ const rows=[];
+ for(const r of records){if(r.kind!=='batch'||r.deleted||r.data.type!=='tool-ledger'||r.data.archived)continue;
+  for(const [eventOrder,x] of toolSummary(r.data).active.entries()){if(type&&x.type!==type)continue;rows.push({eventOrder,at:x.at||'',toolId:r.id,eventId:x.id,name:r.data.name,spec:r.data.spec||'',unit:r.data.unit||'',type:x.type,quantity:x.quantity,date:x.date,receiveDate:x.type==='receive'?x.date:'',issueDate:x.type==='issue'?x.date:'',returnDate:x.type==='return'?x.date:'',person:x.person||'',note:x.note||''});}
+ }
+ const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'}),sign=direction==='asc'?1:-1,blank=v=>v===null||v===undefined||String(v).trim()==='';
+ const rank={receive:0,issue:1,return:2};
+ return rows.sort((a,b)=>{const av=a[key],bv=b[key],ab=blank(av),bb=blank(bv);if(ab!==bb)return ab?1:-1;const result=ab?0:key==='quantity'?av-bv:key==='type'?rank[av]-rank[bv]:collator.compare(String(av),String(bv));return result*sign||b.date.localeCompare(a.date)||String(b.at).localeCompare(String(a.at))||(a.toolId===b.toolId?b.eventOrder-a.eventOrder:0)||collator.compare(a.name,b.name)||collator.compare(a.spec,b.spec)||a.toolId.localeCompare(b.toolId)||a.eventId.localeCompare(b.eventId);});
+}
