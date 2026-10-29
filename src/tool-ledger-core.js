@@ -18,3 +18,15 @@ export function editToolEvent(data,eventId,replacement,cancellation){
  const events=[...data.events];events.splice(index+1,0,replacement);events.push(cancellation);
  const next={...data,events};toolSummary(next);return next;
 }
+export function toolReceiptDays(records){
+ const days=new Map();
+ for(const r of records){
+  if(r.kind!=='batch'||r.deleted||r.data.type!=='tool-ledger'||r.data.archived)continue;
+  for(const x of toolSummary(r.data).active){if(x.type!=='receive')continue;
+   if(!days.has(x.date))days.set(x.date,[]);
+   days.get(x.date).push({toolId:r.id,eventId:x.id,name:r.data.name,spec:r.data.spec||'',unit:r.data.unit||'',quantity:x.quantity,note:x.note||'',person:x.person||''});
+  }
+ }
+ const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
+ return [...days].sort(([a],[b])=>b.localeCompare(a)).map(([date,rows])=>({date,rows:rows.sort((a,b)=>collator.compare(a.name,b.name)||collator.compare(a.spec,b.spec)||a.eventId.localeCompare(b.eventId))}));
+}
