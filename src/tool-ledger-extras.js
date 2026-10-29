@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import {esc as e,uuid} from './core.js';
 import {toolSummary} from './tool-ledger-core.js';
+import {setupToolPhotoViewer} from './tool-photo-viewer.js';
 
 export function orderedTools(records){return [...records].sort((a,b)=>(a.data.order??Infinity)-(b.data.order??Infinity)||String(a.data.addedAt||'').localeCompare(String(b.data.addedAt||''))||a.id.localeCompare(b.id));}
 export function nextToolOrder(records){return records.some(r=>r.data.order==null)?undefined:Math.max(-1,...records.map(r=>r.data.order))+1;}
@@ -20,6 +21,7 @@ export function buildToolWorkbook(records){
 }
 
 export function setupToolExtras({getStore,rerender,notice,dialog,run,tools,allTools,record,button,today}){
+ setupToolPhotoViewer();
  let edit=null,photos=[],generation=0,processing=0;
  const canEdit=()=>getStore().role!=='viewer';
  const context=()=>{const s=getStore();return [s.mode,s.projectId,s.session?.user?.id].join(':');};
