@@ -60,3 +60,14 @@
 
 .tool-mobile-date{display:none}
 @media(max-width:767px){.tool-movements .tool-mobile-date{display:block;margin-top:4px;color:#62798a;font-size:11px;font-weight:400;line-height:1.45;white-space:normal;overflow-wrap:anywhere}}
+
+.tool-mobile-meta{display:none}
+@media(max-width:767px){
+ .tool-movements .tool-mobile-meta{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-top:3px}
+ .tool-movements .tool-mobile-meta .tool-mobile-spec{flex:1;min-width:0;margin:0;font-size:11px;line-height:1.3}
+ .tool-movements .tool-mobile-meta .tool-mobile-date{flex:none;margin:0;font-size:10px;line-height:1.3;white-space:nowrap}
+ .tool-receipts.tool-movements td{padding-top:6px!important;padding-bottom:6px!important}
+ .tool-movements .tool-name-link{min-height:0;display:block;line-height:1.3}
+ .tool-movements .tool-movement-actions{gap:4px}
+ .tool-movements .tool-movement-actions .btn{min-height:32px;padding:4px;font-size:11px;line-height:1.3}
+}
