@@ -1,4 +1,4 @@
-import {loadCloudRecords} from './cloud-records.js';
+import {loadCloudRecords,recentRequestDate,mergeRecords} from './cloud-records.js';
 import {loadCloudPages} from './cloud-pages.js';
 import {createClient} from '@supabase/supabase-js';
 import {uuid,validateRecord,sha256} from './core.js';
@@ -17,16 +17,37 @@ export class Store{
   if(import.meta.env.DEV){const r=await fetch('/__local_seed');if(r.ok){const seed=await r.json();this.records=seed.records;this.projectName=seed.projectName;for(let i=0;i<seed.files.length;i++){const response=await fetch('/__local_file?id='+(i+1));if(response.ok){const bytes=await response.arrayBuffer();const file={id:uuid(),name:seed.files[i],size:bytes.byteLength,hash:await sha256(bytes),path:'',type:'reference'};await idb('files',file.id,bytes);this.files.push(file);}}await this.persist();}}
  }
  async login(email,password){const {error}=await this.client.auth.signInWithPassword({email,password});if(error)throw error;this.session=(await this.client.auth.getSession()).data.session;await this.loadProjects();}
- async logout(){await this.client.auth.signOut();this.session=null;this.records=[];this.files=[];}
+ async logout(){this.loadGeneration=(this.loadGeneration||0)+1;this.recordsPartial=false;this.olderLoading=false;await this.client.auth.signOut();this.session=null;this.records=[];this.files=[];}
  async loadProjects(){const {data,error}=await this.client.from('mm_members').select('project_id,role,mm_projects(name)');if(error)throw Error('Supabase 테이블을 준비하세요. '+error.message);this.projects=data||[];const last=localStorage.getItem('mm-project');const selected=this.projects.find(p=>p.project_id===last)||this.projects[0];if(selected)await this.selectProject(selected.project_id);else {this.projectId='';this.records=[];}}
  async createProject(name){const {data,error}=await this.client.rpc('mm_create_project',{p_name:name});if(error)throw error;await this.loadProjects();await this.selectProject(data);}
- async selectProject(id){this.projectId=id;localStorage.setItem('mm-project',id);const p=this.projects.find(x=>x.project_id===id);this.role=p.role;this.projectName=p.mm_projects.name;await this.refresh();}
- async refresh(){
+ async selectProject(id){this.projectId=id;localStorage.setItem('mm-project',id);const p=this.projects.find(x=>x.project_id===id);this.role=p.role;this.projectName=p.mm_projects.name;await this.refresh({recentFirst:true});}
+ async refresh({recentFirst=false}={}){
   if(this.mode==='local')return;
-  const projectId=this.projectId;
-  const records=await loadCloudRecords(this.client,projectId);
-  if(this.projectId!==projectId)return;
-  this.records=records;this.history=[];this.files=records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));
+  const projectId=this.projectId,generation=(this.loadGeneration||0)+1;this.loadGeneration=generation;
+  this.recordsPartial=false;this.olderLoading=false;this.olderError='';
+  const since=recentFirst?recentRequestDate():'';
+  const records=await loadCloudRecords(this.client,projectId,recentFirst?{kinds:['request','vendor','alias'],requestsSince:since}:{});
+  if(this.projectId!==projectId||this.loadGeneration!==generation)return;
+  this.records=records;this.history=[];this.updateFiles();
+  if(recentFirst){
+   this.recordsPartial=true;this.recentSince=since;
+   setTimeout(()=>{if(this.projectId===projectId&&this.loadGeneration===generation)this.loadOlder();},0);
+  }
+ }
+ updateFiles(){for(const r of this.records){if(r.kind!=='request')continue;const d=r.data;if(d.quantity===null&&d.original?.quantity===null&&d.source?.file)d.quantityUnconfirmed=true;if(d.quantity<0&&d.quantity===d.original?.quantity&&d.source?.file)d.quantityOriginalAdjustment=true;}this.files=this.records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));}
+ async loadOlder(){
+  if(!this.recordsPartial||this.olderLoading)return;
+  const projectId=this.projectId,generation=this.loadGeneration;
+  const current=()=>this.projectId===projectId&&this.loadGeneration===generation&&!!this.session;
+  this.olderLoading=true;this.olderError='';this.onDataChange?.();
+  try{
+   await loadCloudRecords(this.client,projectId,{kinds:['request','approval','file','batch'],requestsBefore:this.recentSince,onGroup:rows=>{
+    if(!current())return;
+    this.records=mergeRecords(this.records,rows);this.updateFiles();this.onDataChange?.();
+   }});
+   if(current())this.recordsPartial=false;
+  }catch(error){if(current())this.olderError=error.message||'이전 내역을 불러오지 못했습니다.';}
+  finally{if(current()){this.olderLoading=false;this.onDataChange?.();}}
  }
  async loadHistory(recordId=''){
   if(this.mode==='local')return recordId?this.history.filter(h=>h.record_id===recordId):this.history;
@@ -46,11 +67,13 @@ export class Store{
   const data=await idb('state','local');return data||{records:this.records,history:this.history,files:this.files};
  }
  async save(kind,id,data,version,reason,action='수정'){
+  if(this.recordsPartial)throw Error('전체 내역을 불러온 뒤 저장할 수 있습니다.');
   validateRecord(kind,data);
   const record={id:id||uuid(),kind,data,version:version||0,deleted:false};
   await this.apply([record],reason,action);return record.id;
  }
  async apply(ops,reason,action='수정',operationId=uuid()){
+  if(this.recordsPartial)throw Error('전체 내역을 불러온 뒤 변경할 수 있습니다.');
   if(!reason?.trim())throw Error('변경 사유를 입력하세요.');
   if(this.role==='viewer')throw Error('조회 권한으로는 변경할 수 없습니다.');
   ops.forEach(o=>{if(!o.deleted&&o.kind!=='file')validateRecord(o.kind,o.data);});
