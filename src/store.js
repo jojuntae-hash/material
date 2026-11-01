@@ -1,3 +1,4 @@
+import {loadCloudPages} from './cloud-pages.js';
 import {createClient} from '@supabase/supabase-js';
 import {uuid,validateRecord,sha256} from './core.js';
 import {publicSupabaseConfig} from './public-config.js';
@@ -19,8 +20,17 @@ export class Store{
  async loadProjects(){const {data,error}=await this.client.from('mm_members').select('project_id,role,mm_projects(name)');if(error)throw Error('Supabase 테이블을 준비하세요. '+error.message);this.projects=data||[];const last=localStorage.getItem('mm-project');const selected=this.projects.find(p=>p.project_id===last)||this.projects[0];if(selected)await this.selectProject(selected.project_id);else {this.projectId='';this.records=[];}}
  async createProject(name){const {data,error}=await this.client.rpc('mm_create_project',{p_name:name});if(error)throw error;await this.loadProjects();await this.selectProject(data);}
  async selectProject(id){this.projectId=id;localStorage.setItem('mm-project',id);const p=this.projects.find(x=>x.project_id===id);this.role=p.role;this.projectName=p.mm_projects.name;await this.refresh();}
- async refresh(){if(this.mode==='local')return;let all=[];for(let offset=0;;offset+=1000){const {data,error}=await this.client.from('mm_records').select('*').eq('project_id',this.projectId).order('id').range(offset,offset+999);if(error)throw error;all.push(...data);if(data.length<1000)break;}this.records=all;
-  const {data,error}=await this.client.from('mm_audit').select('*').eq('project_id',this.projectId).order('created_at',{ascending:false}).limit(500);if(error)throw error;this.history=data||[];this.files=this.records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));
+ async refresh(){
+  if(this.mode==='local')return;
+  const projectId=this.projectId;
+  const records=await loadCloudPages(({limit,last})=>{
+   let query=this.client.from('mm_records').select('*').eq('project_id',projectId).order('id').limit(limit);
+   if(last)query=query.gt('id',last.id);
+   return query;
+  });
+  const history=await loadCloudPages(({offset,limit})=>this.client.from('mm_audit').select('*').eq('project_id',projectId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+limit-1),{pageSize:50,maxRows:500});
+  if(this.projectId!==projectId)return;
+  this.records=records;this.history=history;this.files=records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));
  }
  async persist(){if(this.mode==='local')await idb('state','local',{records:this.records,history:this.history,files:this.files,projectName:this.projectName,role:'admin',projectId:'local'});}
  async snapshot(){
@@ -60,3 +70,4 @@ export class Store{
   else{await idb('state','before-restore',{records:this.records,history:this.history,files:this.files,projectName:this.projectName,createdAt:new Date().toISOString()});const now=new Date().toISOString();this.records=payload.records;this.files=payload.files;this.history=[{id:uuid(),kind:'system',action:'전체 복원',reason:'복원 전 상태를 별도 보존',actor:'로컬 사용자',created_at:now},...(payload.history||[])];await this.persist();}
  }
 }
+

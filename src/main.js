@@ -1,3 +1,4 @@
+import {isQueryTimeout} from './cloud-pages.js';
 import {cancelledSortFields,sortCancelledRequests} from './cancelled-request-sort.js';
 import {requestInactive,changeRequestState} from './request-state.js';
 import {toolsView,setupTools} from './tool-ledger.js';
@@ -266,6 +267,7 @@ document.addEventListener('click',event=>{
  if(a==='pre-restore'){const saved=await idb('state','last-restore-backup');if(!saved)throw Error('보관된 복원 전 백업이 없습니다.');download(saved.bytes,'복원전_자동백업.zip','application/zip');}
  if(a==='file-download'){const meta=store.files.find(f=>f.id===id);if(!meta)throw Error('파일 정보를 찾을 수 없습니다.');download(await store.getFile(meta),meta.name);}
  if(a==='resume'){const r=store.records.find(r=>r.id===id);upload={filename:r.data.filename,sheet:r.data.sheet,rows:structuredClone(r.data.pending),batchId:id,confirmed:true};view='upload';render();}
+ if(a==='retry-load'){location.reload();return;}
  if(a==='refresh'){await store.refresh();render();toast('최신 데이터를 불러왔습니다.');}
  if(a==='logout'){await store.logout();render();}
  if(a==='cloud-mode'){localStorage.removeItem('mm-force-local');location.reload();}
@@ -285,7 +287,7 @@ try{
  for(const r of store.records)if(r.kind==='request'&&r.data.quantity===null&&r.data.original?.quantity===null&&r.data.source?.file)r.data.quantityUnconfirmed=true;
  for(const r of store.records)if(r.kind==='request'&&r.data.quantity<0&&r.data.quantity===r.data.original?.quantity&&r.data.source?.file)r.data.quantityOriginalAdjustment=true;
  render();
-}catch(err){shell(`<div class="panel narrow"><h2>연결 준비가 필요합니다.</h2><p>${e(err.message)}</p><p>전용 테이블이 준비되지 않았거나 권한을 확인할 수 없습니다. 연결 정보와 SQL 실행 여부를 확인하세요.</p>${btn('연결 설정 열기','connection','secondary')}${import.meta.env.DEV?btn('로컬 확인 모드','local-mode'):''}</div>`);toast(err.message,true);}
+}catch(err){if(isQueryTimeout(err)){shell(`<div class="panel narrow"><h2>데이터를 불러오는 데 시간이 오래 걸립니다.</h2><p>서버의 조회 제한 시간을 넘겼습니다. 잠시 후 다시 불러와 주세요. 연결 설정을 바꾸거나 설치 SQL을 다시 실행할 필요는 없습니다.</p>${btn('다시 불러오기','retry-load','primary')}${btn('연결 설정 열기','connection','secondary')}</div>`);}else shell(`<div class="panel narrow"><h2>연결 준비가 필요합니다.</h2><p>${e(err.message)}</p><p>전용 테이블이 준비되지 않았거나 권한을 확인할 수 없습니다. 연결 정보와 SQL 실행 여부를 확인하세요.</p>${btn('연결 설정 열기','connection','secondary')}${import.meta.env.DEV?btn('로컬 확인 모드','local-mode'):''}</div>`);toast(err.message,true);}
 
 
 
