@@ -71,3 +71,18 @@
  .tool-movements .tool-movement-actions{gap:4px}
  .tool-movements .tool-movement-actions .btn{min-height:32px;padding:4px;font-size:11px;line-height:1.3}
 }
+
+.tool-mobile-date-column{display:none}
+@media(max-width:767px){
+ .tool-receipts.tool-movements tr>th,.tool-receipts.tool-movements tr>td{display:none;width:auto}
+ .tool-receipts.tool-movements tr>:first-child,.tool-receipts.tool-movements tr>:nth-child(2),.tool-receipts.tool-movements tr>:nth-child(3),.tool-receipts.tool-movements tr>:nth-child(5),.tool-receipts.tool-movements tr>:last-child{display:table-cell}
+ .tool-receipts.tool-movements tr>:first-child{width:38px;white-space:nowrap}
+ .tool-receipts.tool-movements tr>:nth-child(3){width:70px;white-space:nowrap;font-size:10px;color:#62798a;text-align:center}
+ .tool-receipts.tool-movements tr>:nth-child(5){width:40px;white-space:normal}
+ .tool-receipts.tool-movements tr>:last-child{width:56px}
+ .tool-receipts.tool-movements th .sort-heading{font-size:11px;gap:2px;white-space:nowrap}
+ .tool-receipts.tool-movements th:first-child .sort-heading>span{display:none}
+ .tool-receipts.tool-movements td:nth-child(2) .tool-mobile-spec{margin-top:3px;line-height:1.3;font-size:11px}
+ .tool-receipts.tool-movements td:first-child .tool-movement-badge{padding:3px 4px}
+ .tool-receipts.tool-movements .tool-receipt-quantity span{font-size:10px}
+}
