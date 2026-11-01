@@ -28,9 +28,20 @@ export class Store{
    if(last)query=query.gt('id',last.id);
    return query;
   });
-  const history=await loadCloudPages(({offset,limit})=>this.client.from('mm_audit').select('*').eq('project_id',projectId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+limit-1),{pageSize:50,maxRows:500});
   if(this.projectId!==projectId)return;
-  this.records=records;this.history=history;this.files=records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));
+  this.records=records;this.history=[];this.files=records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));
+ }
+ async loadHistory(recordId=''){
+  if(this.mode==='local')return recordId?this.history.filter(h=>h.record_id===recordId):this.history;
+  const projectId=this.projectId;
+  const history=await loadCloudPages(({offset,limit})=>{
+   let query=this.client.from('mm_audit').select('*').eq('project_id',projectId);
+   if(recordId)query=query.eq('record_id',recordId);
+   return query.order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+limit-1);
+  },{pageSize:50,maxRows:100});
+  if(this.projectId!==projectId)return [];
+  this.history=recordId?[...this.history.filter(h=>h.record_id!==recordId),...history]:history;
+  return history;
  }
  async persist(){if(this.mode==='local')await idb('state','local',{records:this.records,history:this.history,files:this.files,projectName:this.projectName,role:'admin',projectId:'local'});}
  async snapshot(){
