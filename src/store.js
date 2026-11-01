@@ -1,3 +1,4 @@
+import {loadCloudRecords} from './cloud-records.js';
 import {loadCloudPages} from './cloud-pages.js';
 import {createClient} from '@supabase/supabase-js';
 import {uuid,validateRecord,sha256} from './core.js';
@@ -23,11 +24,7 @@ export class Store{
  async refresh(){
   if(this.mode==='local')return;
   const projectId=this.projectId;
-  const records=await loadCloudPages(({limit,last})=>{
-   let query=this.client.from('mm_records').select('*').eq('project_id',projectId).order('id').limit(limit);
-   if(last)query=query.gt('id',last.id);
-   return query;
-  });
+  const records=await loadCloudRecords(this.client,projectId);
   if(this.projectId!==projectId)return;
   this.records=records;this.history=[];this.files=records.filter(r=>r.kind==='file'&&!r.deleted).map(r=>({...r.data,id:r.id}));
  }
