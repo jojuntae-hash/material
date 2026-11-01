@@ -76,10 +76,13 @@
 @media(max-width:767px){
  .tool-receipts.tool-movements tr>th,.tool-receipts.tool-movements tr>td{display:none;width:auto}
  .tool-receipts.tool-movements tr>:first-child,.tool-receipts.tool-movements tr>:nth-child(2),.tool-receipts.tool-movements tr>:nth-child(3),.tool-receipts.tool-movements tr>:nth-child(5),.tool-receipts.tool-movements tr>:last-child{display:table-cell}
- .tool-receipts.tool-movements tr>:first-child{width:38px;white-space:nowrap}
- .tool-receipts.tool-movements tr>:nth-child(3){width:70px;white-space:nowrap;font-size:10px;color:#62798a;text-align:center}
- .tool-receipts.tool-movements tr>:nth-child(5){width:40px;white-space:normal}
- .tool-receipts.tool-movements tr>:last-child{width:56px}
+ .tool-receipts.tool-movements tr>:first-child{width:10%;white-space:nowrap}
+ .tool-receipts.tool-movements tr>:nth-child(2){width:36%}
+ .tool-receipts.tool-movements tr>:nth-child(3){width:24%;white-space:nowrap;font-size:10px;color:#62798a;text-align:left}
+ .tool-receipts.tool-movements tr>:nth-child(5){width:12%;white-space:normal;text-align:center}
+ .tool-receipts.tool-movements tr>:last-child{width:18%;text-align:center}
+ .tool-receipts.tool-movements tr>th,.tool-receipts.tool-movements tr>td{padding-left:4px!important;padding-right:4px!important}
+ .tool-receipts.tool-movements th:nth-child(5) .sort-heading{justify-content:center}
  .tool-receipts.tool-movements th .sort-heading{font-size:11px;gap:2px;white-space:nowrap}
  .tool-receipts.tool-movements th:first-child .sort-heading>span{display:none}
  .tool-receipts.tool-movements td:nth-child(2) .tool-mobile-spec{margin-top:3px;line-height:1.3;font-size:11px}
