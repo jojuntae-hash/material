@@ -57,3 +57,6 @@
 
 .tool-mobile-spec{display:none}
 @media(max-width:767px){.tool-registered .tool-mobile-spec,.tool-movements .tool-mobile-spec{display:block;margin-top:4px;color:#62798a;font-size:12px;font-weight:400;line-height:1.45;white-space:normal;overflow-wrap:anywhere;word-break:break-word}}
+
+.tool-mobile-date{display:none}
+@media(max-width:767px){.tool-movements .tool-mobile-date{display:block;margin-top:4px;color:#62798a;font-size:11px;font-weight:400;line-height:1.45;white-space:normal;overflow-wrap:anywhere}}
