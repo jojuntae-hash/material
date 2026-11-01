@@ -54,3 +54,6 @@
  .tool-management .tool-row-actions{display:flex;flex-wrap:wrap;gap:8px}
  .tool-management .tool-row-actions .btn{min-height:40px}
 }
+
+.tool-mobile-spec{display:none}
+@media(max-width:767px){.tool-registered .tool-mobile-spec,.tool-movements .tool-mobile-spec{display:block;margin-top:4px;color:#62798a;font-size:12px;font-weight:400;line-height:1.45;white-space:normal;overflow-wrap:anywhere;word-break:break-word}}
