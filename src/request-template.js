@@ -1,3 +1,4 @@
+import {tradeRequestNumber} from './request-numbers.js';
 import {zipSync,unzipSync,strToU8,strFromU8} from 'fflate';
 import {materialCategory} from './material-names.js';
 
@@ -109,5 +110,5 @@ export function splitDraftByTrade(d){
  validateDraft(d);
  const missing=d.rows.findIndex(r=>!['기계','소방'].includes(String(r.trade||'').trim()));
  if(missing>=0)throw Error(`${missing+1}번 품목의 구분을 기계 또는 소방으로 선택하세요.`);
- return ['기계','소방'].map(trade=>({trade,draft:{...d,rows:d.rows.filter(r=>String(r.trade).trim()===trade).map(r=>({...r,trade}))}})).filter(x=>x.draft.rows.length);
+ return ['기계','소방'].map(trade=>({trade,draft:{...d,number:tradeRequestNumber(d,trade),rows:d.rows.filter(r=>String(r.trade).trim()===trade).map(r=>({...r,trade}))}})).filter(x=>x.draft.rows.length);
 }
