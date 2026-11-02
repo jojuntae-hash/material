@@ -16,3 +16,10 @@ export function requestFilename(d,trade){
  const project=clean(d.project||'파주 콘텐츠시티').replace(/현장$/,'');
  return `${d.date.slice(5,7)}${d.date.slice(8,10)}_${trade}_${match[1]}_자재청구서-${project||'현장'}.xlsx`;
 }
+
+export function formattedRequestNumber(d,trade){
+ const raw=tradeRequestNumber(d,trade),match=raw.match(/(\d+)\s*$/);
+ if(!match)throw Error(`${trade} 청구번호를 확인하세요.`);
+ const project=String(d.project||'파주 콘텐츠시티').trim().replace(/\s*현장\s*$/,'').trim();
+ return `${project||'파주 콘텐츠시티'} 현장 - ${trade} - ${match[1]}`;
+}
