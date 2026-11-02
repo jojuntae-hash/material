@@ -1,10 +1,10 @@
 export function withTradeNumbers(d){
  const next={...d},legacy=String(d.number||'').trim(),trades=new Set((d.rows||[]).map(r=>r.trade).filter(Boolean));
  for(const [trade,field] of [['기계','mechanicalNumber'],['소방','fireNumber']]){
-  if(typeof next[field]==='string')continue;
+  if(typeof next[field]==='string'){if(!next[field].trim()||/현장\s*-\s*(기계|소방)\s*-\s*$/.test(next[field]))next[field]='000';continue;}
   const matching=legacy.includes(trade)&&!legacy.includes(trade==='기계'?'소방':'기계');
   const sole=trades.size===1&&trades.has(trade)&&!/[기계소방]/.test(legacy);
-  next[field]=matching||sole?legacy:`${d.project||'파주 콘텐츠시티'} 현장 - ${trade} - `;
+  next[field]=(matching||sole)&&/\d+\s*$/.test(legacy)?legacy:'000';
  }
  return next;
 }
