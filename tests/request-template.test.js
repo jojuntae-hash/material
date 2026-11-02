@@ -10,7 +10,7 @@ const template=new Uint8Array(fs.readFileSync(new URL('../public/templates/reque
 const draft=()=>({date:'2026-10-24',number:'기계-001',project:'테스트 현장',manager:'소장',delivery:'2026-10-27',rows:[{name:'배관 & 시험',spec:'25A',unit:'M',quantity:'1.25',dealer:'테스트 대리점',location:'스튜디오1',applicant:'시험자',trade:'기계'}]});
 test('원본 양식의 병합·서식·인쇄설정을 보존하며 정확한 셀에 입력',()=>{
  const bytes=fillRequestTemplate(template,draft()),wb=XLSX.read(bytes,{type:'array'}),s=wb.Sheets[wb.SheetNames[0]];
- for(const [ref,value] of Object.entries({H5:'기계-001',P5:'테스트 현장',P6:'소장',S6:'2026-10-27',C12:'배관 & 시험',I12:'25A',L12:'M',Q12:1.25,T12:'테스트 대리점',U12:'스튜디오1',V12:'시험자',W9:'메모',W12:''}))assert.equal(s[ref].v,value);
+ for(const [ref,value] of Object.entries({H5:'기계-001',P5:'테스트 현장',P6:'소장',S6:'2026-10-27',C12:'배관 & 시험',I12:'25A',L12:'M',Q12:1.25,T12:'테스트 대리점',U12:'스튜디오1',V12:'시험자',W9:'구분',X9:'메모',W12:'기계',X12:''}))assert.equal(s[ref].v,value);
  assert.equal(XLSX.SSF.parse_date_code(s.H6.v).d,24);assert.equal(s.C13,undefined);
  const before=unzipSync(template),after=unzipSync(bytes);assert.deepEqual(after['xl/styles.xml'],before['xl/styles.xml']);
  assert.equal(Object.keys(before).some(k=>k.startsWith('xl/media/')||k.startsWith('xl/drawings/')),false);
@@ -50,15 +50,15 @@ test('위치·신청자는 중복 없이 합치고 기계·소방 수량은 각�
   {...d.rows[0],quantity:7,location:'3번 스튜디오',applicant:'이 부장',trade:'소방'}
  ];
  const wb=XLSX.read(fillRequestTemplate(template,d)),sheet=wb.Sheets[wb.SheetNames[0]];
- assert.equal(sheet.Q12.v,35);assert.equal(sheet.U12.v,'1번 스튜디오 / 2번 스튜디오');assert.equal(sheet.V12.v,'김 차장 / 박 팀장');assert.equal(sheet.W12.v,'');assert.equal(parseDraftSheet(wb,'작성 상세내역').rows[0].trade,'기계');
- assert.equal(sheet.Q13.v,7);assert.equal(sheet.U13.v,'3번 스튜디오');assert.equal(sheet.V13.v,'이 부장');assert.equal(sheet.W13.v,'');assert.equal(parseDraftSheet(wb,'작성 상세내역').rows[3].trade,'소방');
+ assert.equal(sheet.Q12.v,35);assert.equal(sheet.U12.v,'1번 스튜디오 / 2번 스튜디오');assert.equal(sheet.V12.v,'김 차장 / 박 팀장');assert.equal(sheet.W12.v,'기계');assert.equal(parseDraftSheet(wb,'작성 상세내역').rows[0].trade,'기계');
+ assert.equal(sheet.Q13.v,7);assert.equal(sheet.U13.v,'3번 스튜디오');assert.equal(sheet.V13.v,'이 부장');assert.equal(sheet.W13.v,'소방');assert.equal(parseDraftSheet(wb,'작성 상세내역').rows[3].trade,'소방');
 });
 test('인쇄 밖 위치·신청자·구분의 글꼴·정렬과 잔여 테두리를 통일',()=>{
  const d=draft();d.rows=Array.from({length:25},()=>({...d.rows[0],trade:'소방'}));
  const bytes=fillRequestTemplate(template,d),xml=strFromU8(unzipSync(bytes)['xl/worksheets/sheet2.xml']);
  for(const column of ['U','V','W'])for(let row=12;row<37;row++)assert.match(xml.match(new RegExp(`<c\\b[^>]*r="${column}${row}"[^>]*>`))[0],/ s="1"/);
  assert.ok(!xml.includes('r="X16"')||xml.match(/<c\b[^>]*r="X16"[^>]*>/)[0].includes('s="1"'));
- const wb=XLSX.read(bytes);assert.equal(wb.Sheets[wb.SheetNames[0]].W36.v,'');
+ const wb=XLSX.read(bytes);assert.equal(wb.Sheets[wb.SheetNames[0]].X36.v,'');
 });
 test('기존 양식 끝부분과 확장 경계에서도 모든 품목의 병합·서식을 유지',()=>{
  const d=draft();d.rows=Array.from({length:500},()=>({...d.rows[0]}));const bytes=fillRequestTemplate(template,d),wb=XLSX.read(bytes),sheet=wb.Sheets[wb.SheetNames[0]],xml=strFromU8(unzipSync(bytes)['xl/worksheets/sheet2.xml']);
@@ -92,3 +92,5 @@ test('청구서 출력은 현재 품목관리 분류→품명→규격 순, 분�
  for(const mergeItems of [false,true]){const wb=XLSX.read(fillRequestTemplate(template,{...d,mergeItems},rules)),s=wb.Sheets[wb.SheetNames[0]];assert.deepEqual([s.C12.v,s.C13.v,s.C14.v,s.C15.v,s.C16.v],['PVC관','PVC관','PVC엘보','가엘보','미등록품목']);assert.equal(s.I12.v,'D25');assert.equal(s.I13.v,'D100');}
  assert.equal(JSON.stringify(d),before);
 });
+test('기계·소방 파일 분리, 각 파일의 구분·메모와 상세 시트 왕복 및 원본 보존',async()=>{const {splitDraftByTrade}=await import('../src/request-template.js');const d=draft();d.mergeItems=true;d.rows=[{...d.rows[0],quantity:2,note:'기계 메모'},{...d.rows[0],quantity:3,note:'위치 추가',location:'2층'},{...d.rows[0],quantity:7,trade:'소방',note:'소방 메모'}];const before=JSON.stringify(d),parts=splitDraftByTrade(d);assert.deepEqual(parts.map(p=>p.trade),['기계','소방']);for(const p of parts){const wb=XLSX.read(fillRequestTemplate(template,p.draft)),s=wb.Sheets[wb.SheetNames[0]];assert.equal(s.W9.v,'구분');assert.equal(s.X9.v,'메모');assert.equal(s.W12.v,p.trade);assert.equal(s.Q12.v,p.trade==='기계'?5:7);const parsed=parseDraftSheet(wb,wb.SheetNames[0]);assert.equal(parsed.rows[0].trade,p.trade);assert.ok(parsed.rows[0].note.includes('메모'));const imported=extractRows(detectSheet(wb,wb.SheetNames[0]),{});assert.equal(imported[0].data.trade,p.trade);assert.equal(imported[0].data.note,parsed.rows[0].note);assert.ok(parseDraftSheet(wb,'작성 상세내역').rows.every(r=>r.trade===p.trade));}assert.equal(JSON.stringify(d),before);assert.equal(splitDraftByTrade({...d,rows:[d.rows[0]]}).length,1);assert.throws(()=>splitDraftByTrade({...d,rows:[{...d.rows[0],trade:''}]}),/구분/);});
+test('이전 W열 메모 양식도 읽을 수 있다',()=>{const d=draft(),wb=XLSX.read(fillRequestTemplate(template,d)),s=wb.Sheets[wb.SheetNames[0]];s.W9={t:'s',v:'메모'};s.W12={t:'s',v:'이전 메모'};delete s.X9;delete s.X12;assert.equal(parseDraftSheet(wb,wb.SheetNames[0]).rows[0].note,'이전 메모');assert.equal(extractRows(detectSheet(wb,wb.SheetNames[0]),{})[0].data.note,'이전 메모');});

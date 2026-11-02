@@ -21,6 +21,7 @@ export function detectSheet(wb,name,filename=''){
  if(form&&clean(rows[header+1]?.[22])==='구분')map.trade=22;
  if(form&&headers[19]==='대리점'){map.dealer=19;map.note=-1;}
  if(form&&['메모','비고'].includes(clean(rows[header+1]?.[22])))map.note=22;
+ if(form&&['메모','비고'].includes(clean(rows[header+1]?.[23])))map.note=23;
  const docNo=form?clean(rows[4]?.[7]):'';const trade=inferRequestTrade(docNo,filename);
  const date=form?excelDate(rows[5]?.[7],wb.Workbook?.WBProps?.date1904):'';
  const candidates=rows.map((r,i)=>({r,i})).filter(({r,i})=>i>header&&clean(r[map.name])&&(!form||typeof r[0]==='number'));

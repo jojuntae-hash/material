@@ -17,7 +17,7 @@ export function parseDraftSheet(workbook,sheetName,filename=''){
   if(columns.length>1)throw Error(`‘${names[0]}’에 해당하는 열이 여러 개입니다. 열 제목을 확인하세요.`);
   map[field]=columns[0]??-1;
  }
- if(form){Object.assign(map,{name:2,spec:8,unit:11,quantity:16,location:20,applicant:21,trade:heading(data[header+1]?.[22])==='구분'?22:-1,note:['메모','비고'].includes(heading(data[header+1]?.[22]))?22:-1});map.dealer=19;}
+ if(form){Object.assign(map,{name:2,spec:8,unit:11,quantity:16,location:20,applicant:21,trade:heading(data[header+1]?.[22])==='구분'?22:-1,note:['메모','비고'].includes(heading(data[header+1]?.[23]))?23:['메모','비고'].includes(heading(data[header+1]?.[22]))?22:-1});map.dealer=19;}
  const rows=[];let skipped=0;
  for(let i=header+(form?4:1);i<data.length;i++){
   const source=data[i];if(!source.some(v=>text(v)))continue;

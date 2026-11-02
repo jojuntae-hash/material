@@ -83,11 +83,11 @@ export function fillRequestTemplate(bytes,d,rules=[]){
  xml=xml.replace(/<dimension ref="[^"]*"\/>/,`<dimension ref="A1:X${bodyEnd}"/>`);
  const date=Math.round((Date.parse(d.date+'T00:00:00Z')-Date.UTC(1899,11,30))/86400000);
  for(const [ref,v] of Object.entries({H5:d.number||'',H6:date,P5:d.project||'',P6:d.manager||'',S6:d.delivery||''}))xml=writeCell(xml,ref,v);
- xml=writeCell(xml,'W9','메모');
+ xml=writeCell(xml,'W9','구분');xml=writeCell(xml,'X9','메모');
  // Update each row independently so large requests do not repeatedly scan the whole sheet.
  xml=xml.replace(/<row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/row>/g,(rowXml,n)=>{
   const index=Number(n)-12,r=d.rows[index];if(!r)return rowXml;
-  for(const [col,v] of Object.entries({A:index+1,C:r.name,I:r.spec,L:r.unit,Q:Number(r.quantity),T:r.dealer,U:r.location,V:r.applicant,W:r.note||''}))rowXml=writeCell(rowXml,col+n,v);
+  for(const [col,v] of Object.entries({A:index+1,C:r.name,I:r.spec,L:r.unit,Q:Number(r.quantity),T:r.dealer,U:r.location,V:r.applicant,W:r.trade||'',X:r.note||''}))rowXml=writeCell(rowXml,col+n,v);
   return rowXml;
  });
  // Internal tracking columns contain inconsistent legacy fonts and borders.
@@ -104,4 +104,10 @@ export function fillRequestTemplate(bytes,d,rules=[]){
  if(oldName)files['xl/workbook.xml']=strToU8(wb.replaceAll(oldName,sheetName));
  if(original.mergeItems||new Set(original.rows.map(r=>r.trade||'')).size>1)addDetailSheet(files,original);
  return zipSync(files,{level:6});
+}
+export function splitDraftByTrade(d){
+ validateDraft(d);
+ const missing=d.rows.findIndex(r=>!['기계','소방'].includes(String(r.trade||'').trim()));
+ if(missing>=0)throw Error(`${missing+1}번 품목의 구분을 기계 또는 소방으로 선택하세요.`);
+ return ['기계','소방'].map(trade=>({trade,draft:{...d,rows:d.rows.filter(r=>String(r.trade).trim()===trade).map(r=>({...r,trade}))}})).filter(x=>x.draft.rows.length);
 }

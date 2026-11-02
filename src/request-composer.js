@@ -6,7 +6,7 @@ import {readWorkbook} from './excel.js';
 import {parseDraftSheet} from './request-import.js';
 import {aggregateMaterials} from './aggregation.js';
 import {esc} from './core.js';
-import {draftKey,validateDraft,fillRequestTemplate,defaultDelivery,mergeDraftRows} from './request-template.js';
+import {draftKey,validateDraft,fillRequestTemplate,defaultDelivery,mergeDraftRows,splitDraftByTrade} from './request-template.js';
 import {download} from './backup.js';
 import './request-composer.css';
 
@@ -110,6 +110,6 @@ export function setupComposer(options){({getStore,rerender,notice}=options);
   if(action==='remove'){const index=Number(b.dataset.index);state.rows.splice(index,1);selectedRows=new Set([...selectedRows].filter(i=>i!==index).map(i=>i>index?i-1:i));save();renderTableChange();}
   if(action==='clear'&&confirm('현재 작성 내용을 비우고 새로 작성할까요?')){importSequence++;localStorage.removeItem(key);key=null;state=null;rerender();}
   if(action==='apply'){if(!state.rows.length)return;if(!confirm('입력한 공통값으로 모든 품목의 해당 칸을 바꿀까요? 빈 공통값은 적용하지 않습니다.'))return;for(const r of state.rows)for(const k of ['dealer','location','applicant'])if(state[k]?.trim())r[k]=state[k];save();rerender();}
-  if(action==='export'){validateDraft(state);b.disabled=true;const snapshot=structuredClone(state),rules=structuredClone(materialRules(getStore()));const response=await fetch(import.meta.env.BASE_URL+'templates/request.xlsx');if(!response.ok)throw Error('청구서 양식을 불러오지 못했습니다.');const bytes=fillRequestTemplate(new Uint8Array(await response.arrayBuffer()),snapshot,rules);download(bytes,`자재청구서_${[...new Set(snapshot.rows.map(r=>r.trade).filter(Boolean))].join('_')||'구분미입력'}_${snapshot.date}.xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');notice('기존 양식에 입력한 청구서를 내려받았습니다.');}
+  if(action==='export'){const snapshot=structuredClone(state),parts=splitDraftByTrade(snapshot),rules=structuredClone(materialRules(getStore()));b.disabled=true;const response=await fetch(import.meta.env.BASE_URL+'templates/request.xlsx');if(!response.ok)throw Error('청구서 양식을 불러오지 못했습니다.');const template=new Uint8Array(await response.arrayBuffer());const outputs=parts.map(part=>({name:`자재청구서_${part.trade}_${snapshot.date}.xlsx`,bytes:fillRequestTemplate(template,part.draft,rules)}));for(const output of outputs){download(output.bytes,output.name,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');}notice(outputs.length===2?'기계·소방 청구서를 각각 내려받았습니다. 파일이 하나만 보이면 브라우저의 여러 파일 다운로드를 허용해 주세요.':'청구서를 내려받았습니다.');}
  }catch(err){notice(err.message,true);}finally{b.disabled=false;}});
 }
