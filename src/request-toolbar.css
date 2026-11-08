@@ -32,3 +32,11 @@
  html body .requests-page .request-list-toolbar{gap:3px}
  html body .requests-page .request-list-toolbar .sort-controls{margin-inline:0;min-width:80px}
 }
+
+@media(max-width:767px){
+ html body .requests-page .request-list-toolbar .sort-controls select,
+ html body .requests-page .request-list-toolbar .sort-controls .btn,
+ html body .requests-page .request-list-toolbar .request-list-actions .btn{
+  font-family:inherit;font-size:calc(12px * var(--font-scale,1))!important;font-weight:600;line-height:1.3;
+ }
+}
