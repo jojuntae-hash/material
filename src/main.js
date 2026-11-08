@@ -18,6 +18,7 @@ import './mobile.css';
 import './layout.css';
 import './appearance.css';
 import './request-compact.css';
+import './layout-consistency.css';
 import {setupAppearance,appearanceSettings} from './appearance.js';
 import {sortRequests,requestSortFields} from './sort.js';
 import {Store,config,idb} from './store.js';
