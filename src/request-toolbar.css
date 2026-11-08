@@ -19,3 +19,16 @@
  html body .requests-page .request-list-toolbar .sort-controls select{width:65px}
  html body .requests-page .request-list-toolbar .request-list-actions .btn{padding:4px;font-size:10px!important}
 }
+
+@media(max-width:767px){
+ html body .requests-page .request-list-toolbar{align-items:center;gap:8px}
+ html body .requests-page .request-list-toolbar .sort-controls{flex:1 1 110px;min-width:88px;max-width:150px;align-items:center;gap:4px;margin-inline:4px}
+ html body .requests-page .request-list-toolbar .sort-controls select{flex:1 1 auto;width:0;min-width:0;height:34px!important;min-height:34px!important;max-height:34px;box-sizing:border-box;padding:4px 7px!important;font-size:11px!important;line-height:1.3;border-radius:7px}
+ html body .requests-page .request-list-toolbar .sort-controls .btn,
+ html body .requests-page .request-list-toolbar .request-list-actions .btn{height:34px;min-height:34px;max-height:34px;box-sizing:border-box;line-height:1.3;align-items:center}
+ html body .requests-page .request-list-toolbar .sort-controls .btn{width:28px;min-width:28px;flex:0 0 28px;padding:4px;font-size:12px!important}
+}
+@media(max-width:359px){
+ html body .requests-page .request-list-toolbar{gap:3px}
+ html body .requests-page .request-list-toolbar .sort-controls{margin-inline:0;min-width:80px}
+}
