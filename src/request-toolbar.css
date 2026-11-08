@@ -1,0 +1,21 @@
+@media(max-width:767px){
+ html body .requests-page .request-list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:8px 0}
+ html body .requests-page .request-list-toolbar .section-heading{display:contents}
+ html body .requests-page .request-list-toolbar .section-heading>div:first-child{flex:none;order:0}
+ html body .requests-page .request-list-toolbar h2{font-size:14px!important;gap:4px;white-space:nowrap}
+ html body .requests-page .request-list-toolbar .count{font-size:11px!important;padding:2px 4px}
+ html body .requests-page .request-list-toolbar .section-heading p{display:none}
+ html body .requests-page .request-list-toolbar .sort-controls{order:1;display:flex;flex:none;margin:0;gap:3px}
+ html body .requests-page .request-list-toolbar .sort-controls label,html body .requests-page .request-list-toolbar .sort-controls>span{display:none}
+ html body .requests-page .request-list-toolbar .sort-controls select{width:72px;flex:none;min-height:34px;padding:4px;font-size:12px!important}
+ html body .requests-page .request-list-toolbar .sort-controls .btn{min-width:24px;width:24px;min-height:34px;padding:3px}
+ html body .requests-page .request-list-toolbar .request-list-actions{order:2;gap:4px;margin:0;flex:none}
+ html body .requests-page .request-list-toolbar .request-list-actions .btn{min-height:34px;padding:4px 6px;font-size:11px!important;gap:3px}
+ html body .requests-page .request-list-toolbar .request-list-actions svg{width:14px;height:14px;flex-basis:14px}
+}
+@media(max-width:359px){
+ html body .requests-page .request-list-toolbar{gap:3px}
+ html body .requests-page .request-list-toolbar h2{font-size:13px!important}
+ html body .requests-page .request-list-toolbar .sort-controls select{width:65px}
+ html body .requests-page .request-list-toolbar .request-list-actions .btn{padding:4px;font-size:10px!important}
+}
