@@ -1,0 +1,47 @@
+/* Request-specific density, after theme and font-size preferences. */
+.requests-page .request-list-actions{align-items:center;gap:6px}
+.requests-page .request-list-actions .btn{white-space:nowrap}
+.requests-page .sort-controls [data-action="sort-direction"]{width:34px;min-width:34px;padding:4px}
+@media(max-width:767px){
+ .requests-page .request-page-header{flex-wrap:nowrap;align-items:center;gap:6px}
+ .requests-page .request-page-header .page-title{flex:none}
+ .requests-page .request-page-header .page-title h1{font-size:20px;white-space:nowrap}
+ .requests-page .request-page-actions{gap:5px;min-width:0}
+ .requests-page .request-page-actions .btn{min-height:34px;padding:5px 6px;gap:4px;font-size:11px}
+ .requests-page .filter-panel{padding:8px 10px;margin-bottom:8px}
+ .requests-page .segmented{margin-bottom:6px}
+ .requests-page .filter-more{margin-top:3px}
+ .requests-page .filter-more summary{min-height:28px;padding-top:4px}
+ .requests-page .section-heading:has(+.sort-controls){display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:6px;margin:8px 0 4px}
+ .requests-page .section-heading h2{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:16px}
+ .requests-page .section-heading .count{font-size:12px;padding:2px 5px}
+ .requests-page .request-list-actions{margin:0;gap:5px}
+ .requests-page .request-list-actions .btn{min-height:34px;padding:5px 8px;gap:4px;font-size:12px}
+ .requests-page .request-list-actions .btn svg{width:15px;height:15px}
+ .requests-page .sort-controls{flex-wrap:nowrap;justify-content:flex-end;gap:5px;margin:0 0 5px}
+ .requests-page .sort-controls label{font-size:11px;margin:0}
+ .requests-page .sort-controls select{flex:0 1 105px;width:105px;min-width:0;min-height:34px;padding:4px 7px;font-size:16px}
+ .requests-page .sort-controls .btn{min-height:34px}
+ .requests-page .request-table,.requests-page .request-table tbody{display:block;width:100%;min-width:0}
+ .requests-page .request-table tbody{gap:0}
+ .requests-page .request-table tr{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.8fr) 72px 48px;align-items:center;gap:6px;min-height:44px;padding:8px 10px;border-radius:0}
+ .requests-page .request-table td{padding:0;min-width:0;width:auto;max-width:none;grid-row:1;line-height:1.35}
+ .requests-page .request-table .cell-name{grid-column:1;grid-row:1;align-self:center;padding:0;min-width:0}
+ .requests-page .request-table .cell-name b{display:block;width:auto;max-width:100%;padding:0;font-size:calc(13px * var(--font-scale,1));font-weight:600;line-height:1.35;white-space:normal;overflow:visible;overflow-wrap:anywhere;-webkit-line-clamp:unset}
+ .requests-page .request-table .cell-spec{display:block;grid-column:2;grid-row:1;line-height:1.35;font-size:calc(12px * var(--font-scale,1));overflow-wrap:anywhere}
+ .requests-page .request-table .cell-date{grid-column:3;grid-row:1;text-align:right;white-space:nowrap;font-size:calc(11px * var(--font-scale,1))}
+ .requests-page .request-table .cell-quantity{grid-column:4;grid-row:1;max-width:none;text-align:right;padding:0;font-size:calc(13px * var(--font-scale,1));line-height:1.35}
+ .requests-page .request-table .cell-quantity .mobile-only{font-size:.85em}
+ .requests-page .pagination{padding-top:8px;padding-bottom:8px}
+ html[data-scaled=true] .requests-page .request-table td{padding:0;line-height:1.35}
+ html[data-scaled=true] .requests-page .request-table .cell-spec{font-size:calc(12px * var(--font-scale))!important}
+ html[data-scaled=true] .requests-page .request-table .cell-date{font-size:calc(11px * var(--font-scale))!important}
+ html[data-scaled=true] .requests-page .request-list-actions .btn{min-height:34px;padding:5px 7px;font-size:calc(12px * var(--font-scale))!important;white-space:nowrap}
+ html[data-scaled=true] .requests-page .request-page-header h1{font-size:calc(20px * var(--font-scale))!important}
+ html[data-scaled=true] .requests-page .request-page-actions .btn{min-height:34px;padding:5px 6px;font-size:calc(11px * var(--font-scale))!important;white-space:nowrap}
+}
+@media(max-width:359px){
+ .requests-page .request-table tr{grid-template-columns:minmax(0,1.1fr) minmax(0,.7fr) 65px 40px;padding:7px;gap:4px}
+ .requests-page .section-heading h2{font-size:15px}
+ .requests-page .request-list-actions .btn{padding:5px 6px}
+}
