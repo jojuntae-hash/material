@@ -71,3 +71,8 @@ html[data-scaled=true] .composer-table th:nth-child(4){width:calc(80px * var(--f
  .requests-page .request-table .cell-spec,.requests-page .request-table th:nth-child(4){width:calc(150px * var(--font-scale));min-width:calc(130px * var(--font-scale));max-width:calc(190px * var(--font-scale))}
 }
 @media(max-width:767px){.requests-page .request-table .cell-name b{padding-right:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;white-space:normal;overflow-wrap:anywhere}}
+/* Hover and keyboard focus must change foreground with the background. */
+html[data-theme]:not([data-theme=classic]) .nav-item:not(.active):is(:hover,:focus-visible){background:var(--accent);color:var(--ink)}
+html[data-theme]:not([data-theme=classic]) .nav-item:is(:hover,:focus-visible) :is(span,svg){color:inherit}
+html[data-theme]:not([data-theme=classic]) .nav-item.active:is(:hover,:focus-visible){background:var(--navy);color:#fff}
+html[data-theme=block] .nav-item.active:is(:hover,:focus-visible){background:#f24e42;color:#171717}
