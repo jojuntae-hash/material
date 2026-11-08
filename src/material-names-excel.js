@@ -34,8 +34,8 @@ export function planMaterialRulesImport(existing,incoming){
   const keys=new Set(row.aliases.map(materialNameKey));
   const overlaps=rules.filter(r=>r.aliases.some(a=>keys.has(materialNameKey(a))));
   if(overlaps.some(r=>r.target!==row.target))throw Error(`‘${row.aliases.join(' / ')}’의 변환 후 품명이 기존 규칙과 다릅니다. 기존 규칙은 유지됩니다. 목록에서 수정하거나 파일을 확인하세요.`);
-  const matching=overlaps[0];
-  if(matching){const known=new Set(overlaps.flatMap(r=>r.aliases.map(materialNameKey))),fresh=row.aliases.filter(a=>!known.has(materialNameKey(a)));if(fresh.length){matching.aliases.push(...fresh);updated++;}else skipped++;}
+  const matching=overlaps[0]||rules.find(r=>materialNameKey(r.target)===materialNameKey(row.target));
+  if(matching){const known=new Set([matching,...overlaps].flatMap(r=>r.aliases.map(materialNameKey))),fresh=row.aliases.filter(a=>!known.has(materialNameKey(a)));if(fresh.length){matching.aliases.push(...fresh);updated++;}else skipped++;}
   else{rules.push({...row,id:crypto.randomUUID()});added++;}
  }
  validateMaterialRules(rules);return {rules,added,updated,skipped};

@@ -77,7 +77,7 @@ test('띄어쓰기·줄바꿈·보이지 않는 문자 차이는 합산하되 �
 test('품명·규격으로 합산하여 공란 보완·여러 내용 병기·단위 차이 EA 처리',()=>{
  const row={name:'PVC관 (VG2)',spec:'D35',unit:'본',quantity:1,trade:'',dealer:'',location:'',applicant:'',note:''};
  const rows=[row,{...row,quantity:7,trade:'기계',dealer:'두리/연수',location:'지하',applicant:'김',note:'확인'},{...row,quantity:2,trade:'기계',unit:'EA',dealer:'다른 업체',location:'2층',applicant:'박',note:'추가'}];
- const before=JSON.stringify(rows),result=mergeDraftRows(rows);assert.equal(result.length,1);assert.equal(result[0].quantity,10);assert.equal(result[0].unit,'EA');assert.equal(result[0].trade,'기계');assert.equal(result[0].dealer,'두리/연수 / 다른 업체');assert.equal(result[0].location,'지하 / 2층');assert.equal(result[0].applicant,'김 / 박');assert.equal(result[0].note,'확인 / 추가');assert.equal(JSON.stringify(rows),before);
+ const before=JSON.stringify(rows),result=mergeDraftRows(rows);assert.equal(result.length,1);assert.equal(result[0].quantity,10);assert.equal(result[0].unit,'EA');assert.equal(result[0].trade,'기계');assert.equal(result[0].dealer,'두리/연수 / 다른 업체');assert.equal(result[0].location,'지하 / 2층');assert.equal(result[0].applicant,'김 / 박');assert.equal(result[0].note,'확인 / 추가, 김 7개 / 박 2개');assert.equal(JSON.stringify(rows),before);
  const both=mergeDraftRows([...rows,{...row,trade:'소방',quantity:5}]);assert.equal(both.length,3);assert.equal(both.find(r=>r.trade==='소방').quantity,5);assert.equal(both.find(r=>r.trade==='').quantity,1);
  const blankUnit=mergeDraftRows([{...row,unit:''},{...row,unit:'M'}]);assert.equal(blankUnit[0].unit,'M');
 });
@@ -94,3 +94,15 @@ test('청구서 출력은 현재 품목관리 분류→품명→규격 순, 분�
 });
 test('기계·소방 파일 분리, 각 파일의 구분·메모와 상세 시트 왕복 및 원본 보존',async()=>{const {splitDraftByTrade}=await import('../src/request-template.js');const d=draft();d.mergeItems=true;d.rows=[{...d.rows[0],quantity:2,note:'기계 메모'},{...d.rows[0],quantity:3,note:'위치 추가',location:'2층'},{...d.rows[0],quantity:7,trade:'소방',note:'소방 메모'}];const before=JSON.stringify(d),parts=splitDraftByTrade(d);assert.deepEqual(parts.map(p=>p.trade),['기계','소방']);for(const p of parts){const wb=XLSX.read(fillRequestTemplate(template,p.draft)),s=wb.Sheets[wb.SheetNames[0]];assert.equal(s.W9.v,'구분');assert.equal(s.X9.v,'메모');assert.equal(s.W12.v,p.trade);assert.equal(s.Q12.v,p.trade==='기계'?5:7);const parsed=parseDraftSheet(wb,wb.SheetNames[0]);assert.equal(parsed.rows[0].trade,p.trade);assert.ok(parsed.rows[0].note.includes('메모'));const imported=extractRows(detectSheet(wb,wb.SheetNames[0]),{});assert.equal(imported[0].data.trade,p.trade);assert.equal(imported[0].data.note,parsed.rows[0].note);assert.ok(parseDraftSheet(wb,'작성 상세내역').rows.every(r=>r.trade===p.trade));}assert.equal(JSON.stringify(d),before);assert.equal(splitDraftByTrade({...d,rows:[d.rows[0]]}).length,1);assert.throws(()=>splitDraftByTrade({...d,rows:[{...d.rows[0],trade:''}]}),/구분/);});
 test('이전 W열 메모 양식도 읽을 수 있다',()=>{const d=draft(),wb=XLSX.read(fillRequestTemplate(template,d)),s=wb.Sheets[wb.SheetNames[0]];s.W9={t:'s',v:'메모'};s.W12={t:'s',v:'이전 메모'};delete s.X9;delete s.X12;assert.equal(parseDraftSheet(wb,wb.SheetNames[0]).rows[0].note,'이전 메모');assert.equal(extractRows(detectSheet(wb,wb.SheetNames[0]),{})[0].data.note,'이전 메모');});
+
+ test('합산 메모에 신청자별 수량을 기존 메모 뒤에 추가하고 원본과 단독 행은 보존',()=>{
+ const base={name:'클램프',spec:'D25',unit:'EA',trade:'기계',quantity:2,applicant:'김광회차장',note:'긴급'};
+ const rows=[base,{...base,quantity:3,applicant:'임종한 부장',note:''},{...base,quantity:1,applicant:'김광회 차장'},{...base,quantity:4,applicant:''},{...base,trade:'소방',quantity:7}];
+ const before=JSON.stringify(rows),merged=mergeDraftRows(rows);
+ assert.equal(merged[0].note,'긴급, 김광회차장 3개 / 임종한 부장 3개');assert.equal(merged[0].quantity,10);assert.equal(merged[1].note,'긴급');assert.equal(JSON.stringify(rows),before);
+ assert.equal(mergeDraftRows([{...base,note:''},{...base,note:''}])[0].note,'김광회차장 4개');
+ assert.equal(mergeDraftRows([{...base,unit:'M'},{...base,unit:'M',quantity:.5}])[0].note,'긴급, 김광회차장 2.5M');
+ const d={...draft(),mergeItems:true,rows:rows.slice(0,2)},wb=XLSX.read(fillRequestTemplate(template,d)),sheet=wb.Sheets[wb.SheetNames[0]];
+ assert.equal(sheet.X12.v,'긴급, 김광회차장 2개 / 임종한 부장 3개');assert.equal(parseDraftSheet(wb,'작성 상세내역').rows[0].note,'긴급');
+ const plain=XLSX.read(fillRequestTemplate(template,{...d,mergeItems:false}));assert.equal(plain.Sheets[plain.SheetNames[0]].X12.v,'긴급');
+ });

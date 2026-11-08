@@ -11,8 +11,9 @@ export function materialCategory(name,rules){
  return String(matches.find(r=>String(r.category||'').trim())?.category||'').trim();
 }
 export function validateMaterialRules(rules){
- const seen=new Map();
+ const seen=new Map(),ids=new Set();
  for(const r of rules){
+  if(r.id){if(ids.has(r.id))throw Error('중복된 표준 자재 ID가 있습니다.');ids.add(r.id);}
   if(!String(r.target||'').trim()||!Array.isArray(r.aliases)||!r.aliases.length||r.aliases.some(a=>!materialNameKey(a)))throw Error('변환 전 품명과 변환 후 품명을 입력하세요.');
   for(const alias of r.aliases){const key=materialNameKey(alias),target=String(r.target).trim();if(seen.has(key)&&seen.get(key)!==target)throw Error(`‘${alias}’에 서로 다른 변환 후 품명이 등록되어 있습니다.`);seen.set(key,target);}
  }

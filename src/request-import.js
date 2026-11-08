@@ -23,7 +23,7 @@ export function parseDraftSheet(workbook,sheetName,filename=''){
   const source=data[i];if(!source.some(v=>text(v)))continue;
   const get=k=>map[k]<0?'':source[map[k]]??'';
   if(!text(get('name'))){skipped++;continue;}if(heading(get('name'))==='품명')continue;
-  const row=Object.fromEntries(Object.keys(aliases).map(k=>[k,text(get(k))]));
+  const row=Object.fromEntries(Object.keys(aliases).map(k=>[k,text(get(k))]));const originalColumn=headings.indexOf('원본품명');if(originalColumn>=0&&text(source[originalColumn]))row.originalName=text(source[originalColumn]);
   if(!row.trade)row.trade=inferRequestTrade(form?data[4]?.[7]:'',filename);
   const qty=get('quantity');row.quantity=typeof qty==='number'?qty:text(qty).replace(/,/g,'');
   rows.push(row);

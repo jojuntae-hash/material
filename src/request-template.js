@@ -1,3 +1,4 @@
+import {materialResolver} from './material-standard.js';
 import {formattedRequestNumber} from './request-numbers.js';
 import {zipSync,unzipSync,strToU8,strFromU8} from 'fflate';
 import {materialCategory} from './material-names.js';
@@ -26,20 +27,24 @@ export function mergeDraftRows(rows){
  rows.forEach((row,i)=>{
   const base=materialKey(row,i),known=trades.get(base),trade=norm(row.trade)||(known.size===1?[...known][0]:'');
   const key=JSON.stringify([base,trade]);
-  if(!groups.has(key))groups.set(key,{row:{...row,trade},quantity:0,values:Object.fromEntries(['unit','dealer','location','applicant','note'].map(k=>[k,new Map()]))});
+  if(!groups.has(key))groups.set(key,{row:{...row,trade},quantity:0,count:0,applicants:new Map(),values:Object.fromEntries(['unit','dealer','location','applicant','note'].map(k=>[k,new Map()]))});
   const g=groups.get(key);g.quantity=Number((g.quantity+Number(row.quantity)).toPrecision(15));
+  g.count++;
+  const applicant=String(row.applicant??'').trim(),applicantKey=norm(applicant);
+  if(applicantKey){const entry=g.applicants.get(applicantKey)||{name:applicant,quantity:0};entry.quantity=Number((entry.quantity+Number(row.quantity)).toPrecision(15));g.applicants.set(applicantKey,entry);}
   for(const field of Object.keys(g.values)){const value=String(row[field]??'').trim(),key=norm(value);if(key&&!g.values[field].has(key))g.values[field].set(key,value);}
  });
  return [...groups.values()].map(g=>{
   const result={...g.row,quantity:g.quantity};
   for(const [field,values] of Object.entries(g.values))result[field]=field==='unit'?(values.size>1?'EA':[...values.values()][0]||''):[...values.values()].join(' / ');
+  if(g.count>1&&g.applicants.size){const unit=!result.unit||norm(result.unit)==='EA'?'개':result.unit;const breakdown=[...g.applicants.values()].map(a=>`${a.name} ${a.quantity}${unit}`).join(' / ');result.note=[result.note,breakdown].filter(Boolean).join(', ');}
   return result;
  });
 }
 
 function addDetailSheet(files,d){
- const fields=['trade','date','name','spec','unit','quantity','dealer','location','applicant','note'];
- const rows=[['분류','날짜','품명','규격','단위','수량','대리점','작업위치','신청자','메모'],...d.rows.map(r=>fields.map(k=>k==='date'?d.date:k==='quantity'?Number(r[k]):r[k]||''))];
+ const fields=['trade','date','name','spec','unit','quantity','dealer','location','applicant','note','originalName'];
+ const rows=[['분류','날짜','품명','규격','단위','수량','대리점','작업위치','신청자','메모','원본 품명'],...d.rows.map(r=>fields.map(k=>k==='date'?d.date:k==='quantity'?Number(r[k]):r[k]||''))];
  const data=rows.map((row,i)=>`<row r="${i+1}">${row.map((v,j)=>`<c r="${String.fromCharCode(65+j)}${i+1}" ${typeof v==='number'?'':'t="inlineStr"'}>${typeof v==='number'?`<v>${v}</v>`:`<is><t xml:space="preserve">${xmlEscape(v)}</t></is>`}</c>`).join('')}</row>`).join('');
  files['xl/worksheets/composer-detail.xml']=strToU8(`<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="10" width="22" customWidth="1"/></cols><sheetData>${data}</sheetData></worksheet>`);
  const patch=(name,closing,value)=>{files[name]=strToU8(strFromU8(files[name]).replace(closing,value+closing));};
@@ -61,7 +66,7 @@ function writeCell(xml,ref,value){
  });
 }
 export function fillRequestTemplate(bytes,d,rules=[]){
- validateDraft(d);const original=d;
+ validateDraft(d);const original=d,resolve=materialResolver(rules);d={...d,rows:d.rows.map(resolve)};
  const collator=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
  const categoryOrder=(a,b)=>{const x=materialCategory(a.name,rules),y=materialCategory(b.name,rules);return !x||!y?(!x&&!y?0:!x?1:-1):collator.compare(x,y);};
  d={...d,rows:[...(d.mergeItems?mergeDraftRows(d.rows):d.rows)].sort((a,b)=>categoryOrder(a,b)||collator.compare(a.name||'',b.name||'')||collator.compare(a.spec||'',b.spec||'')||collator.compare(a.unit||'',b.unit||'')||collator.compare(a.trade||'',b.trade||''))};

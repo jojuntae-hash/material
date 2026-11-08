@@ -33,18 +33,20 @@ export function detectSheet(wb,name,filename=''){
 }
 export function extractRows(info,{map=info.map,trade=info.trade,date=info.date,records=[],filename=''}){
  const byName=(name,role)=>{const a=records.filter(r=>r.kind==='vendor'&&!r.deleted&&clean(r.data.name)===clean(name)&&r.data.roles?.includes(role));return a.length===1?a[0].id:'';};
+ const originalColumn=info.rows[info.header].findIndex(h=>clean(h).replace(/\s/g,'')==='원본품명');
  const known=new Set(records.filter(r=>r.kind==='request'&&!r.deleted).map(r=>fingerprint(r.data)));
  return info.candidates.map(({r,i})=>{
   const value=k=>map[k]>=0?r[map[k]]:'';const note=clean(value('note'));const resolved=resolveVendors(note,records);
   const company=resolveColumns(value('manufacturer'),value('dealer'),note,records);
   const d={trade:clean(value('trade'))||trade,date:excelDate(value('date'))||date,name:clean(value('name')),spec:clean(value('spec')),unit:clean(value('unit')),quantity:value('quantity'),...company,location:clean(value('location')),applicant:clean(value('applicant')),note,approvalId:'',documentNumber:info.docNo,source:{file:filename,sheet:info.name,row:i+1},original:{cells:r,quantityColumn:columnName(map.quantity)}};
+  if(originalColumn>=0&&clean(r[originalColumn]))d.originalName=clean(r[originalColumn]);
   const issues=[];try{validateRecord('request',d);}catch(e){issues.push(e.message);}if(!d.unit)issues.push('단위 미확인');if(!d.manufacturerId||!d.dealerId)issues.push('업체 연결 미확인');
   const duplicate=known.has(fingerprint(d));return {id:uuid(),data:d,issues,duplicate,selected:!issues.length&&!duplicate};
  });
 }
 export function exportRequests(rows,vendorName){
- const header=['분류','날짜','품명','규격','단위','수량','원자재','대리점','작업위치','신청자','비고','원본파일','원본시트','원본행','청구상태','취소사유'];
- const body=rows.map(({data:d})=>[d.trade,d.date,d.name,d.spec,d.unit,d.quantity===null?null:Number(d.quantity),vendorName(d.manufacturerId)||d.rawManufacturer||'',vendorName(d.dealerId)||d.rawDealer||'',d.location,d.applicant,d.note,d.source?.file||'',d.source?.sheet||'',d.source?.row||'',d.requestCancellation?.active?'청구 취소':'정상',d.requestCancellation?.active?d.requestCancellation.reason:'']);
+ const header=['분류','날짜','품명','규격','단위','수량','원자재','대리점','작업위치','신청자','비고','원본파일','원본시트','원본행','청구상태','취소사유','원본 품명'];
+ const body=rows.map(({data:d})=>[d.trade,d.date,d.name,d.spec,d.unit,d.quantity===null?null:Number(d.quantity),vendorName(d.manufacturerId)||d.rawManufacturer||'',vendorName(d.dealerId)||d.rawDealer||'',d.location,d.applicant,d.note,d.source?.file||'',d.source?.sheet||'',d.source?.row||'',d.requestCancellation?.active?'청구 취소':'정상',d.requestCancellation?.active?d.requestCancellation.reason:'',d.originalName||d.name]);
  const ws=XLSX.utils.aoa_to_sheet([header,...body]);ws['!cols']=header.map((_,i)=>({wch:[2,3,10,11,12].includes(i)?30:16}));ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:body.length,c:header.length-1}})};const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'청구내역');XLSX.writeFile(wb,`자재청구내역_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 export function exportMaterialTotals(groups,filters){
@@ -54,7 +56,7 @@ export function exportMaterialTotals(groups,filters){
 }
 export function buildMaterialCartWorkbook({groups,rows,totals},vendorName,projectName){
  const wb=XLSX.utils.book_new();
- const sheets=[['담은 자재', [['품명','규격','단위','총청구수량','기계','소방','청구 항목 수','수량 미확인'],...groups.map(g=>[g.name,g.spec,g.unit,g.count===g.missing?null:g.total,g.mechanical,g.fire,g.count,g.missing])]],['규격별 합계',[['규격','단위','총청구수량','기계','소방','청구 항목 수','수량 미확인'],...totals.map(g=>[g.spec,g.unit,g.count===g.missing?null:g.total,g.mechanical,g.fire,g.count,g.missing])]],['청구내역',[['분류','날짜','품명','규격','단위','수량','원자재','대리점','작업위치','신청자','비고'],...rows.map(({data:d})=>[d.trade,d.date,d.name,d.spec,d.unit,d.quantity==null||d.quantity===''?null:Number(d.quantity),vendorName(d.manufacturerId)||d.rawManufacturer||'',vendorName(d.dealerId)||d.rawDealer||'',d.location,d.applicant,d.note])]],['조회 기준',[['항목','내용'],['현장',projectName],['기간','전체 기간 (현재 검색 조건과 별도)'],['합계 기준','담은 자재의 동일 규격·단위별 합계 / 미확인 수량 제외 / 음수 조정 반영'],['생성 시각',new Date().toLocaleString('ko-KR')]]]];
+ const sheets=[['담은 자재', [['품명','규격','단위','총청구수량','기계','소방','청구 항목 수','수량 미확인'],...groups.map(g=>[g.name,g.spec,g.unit,g.count===g.missing?null:g.total,g.mechanical,g.fire,g.count,g.missing])]],['규격별 합계',[['규격','단위','총청구수량','기계','소방','청구 항목 수','수량 미확인'],...totals.map(g=>[g.spec,g.unit,g.count===g.missing?null:g.total,g.mechanical,g.fire,g.count,g.missing])]],['청구내역',[['분류','날짜','품명','규격','단위','수량','원자재','대리점','작업위치','신청자','비고','원본 품명'],...rows.map(({data:d})=>[d.trade,d.date,d.name,d.spec,d.unit,d.quantity==null||d.quantity===''?null:Number(d.quantity),vendorName(d.manufacturerId)||d.rawManufacturer||'',vendorName(d.dealerId)||d.rawDealer||'',d.location,d.applicant,d.note,d.originalName||d.name])]],['조회 기준',[['항목','내용'],['현장',projectName],['기간','전체 기간 (현재 검색 조건과 별도)'],['합계 기준','담은 자재의 동일 규격·단위별 합계 / 미확인 수량 제외 / 음수 조정 반영'],['생성 시각',new Date().toLocaleString('ko-KR')]]]];
  for(const [name,data] of sheets){const ws=XLSX.utils.aoa_to_sheet(data);ws['!cols']=data[0].map(()=>({wch:24}));XLSX.utils.book_append_sheet(wb,ws,name);}return wb;
 }
 export function exportMaterialCart(data,vendorName,projectName){XLSX.writeFile(buildMaterialCartWorkbook(data,vendorName,projectName),`담은자재_청구내역_${new Date().toLocaleDateString('sv-SE')}.xlsx`);}
