@@ -15,6 +15,7 @@ export function attachStatements(){
   for(const id of ['totalCount','itemCount','latestStatementDate'])summary.append(root.getElementById(id));intro.replaceWith(summary);
   const library=root.getElementById('library'),aside=library.querySelector('aside');
   const groups=document.createElement('details');groups.className='native-groups';const caption=document.createElement('summary');caption.textContent='거래처 · 관리폴더 분류';groups.append(caption,aside);library.querySelector('.results').prepend(groups);
+  const fit=document.createElement('button');fit.id='fitImageButton';fit.textContent='전체 보기';fit.type='button';root.querySelector('.image-tools').prepend(fit);
   engine=mountStatementApp(root);
  }
  slot.append(host);
