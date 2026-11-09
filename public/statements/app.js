@@ -5,6 +5,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let docs=[], current=null, detailTab='image', selected=new Set(), suppliers=new Set(), groups=new Set(), collected=false, allDates=true;
 let source=null, entries=new Map(), imageEntries=new Map(), urls=new Map(), busy=false, zoom=100, angle=0, detailRequest=0;
 const quantityDrafts=new Map();
+const returnLink=document.getElementById('materialReturn');if(returnLink&&new URLSearchParams(location.search).get('local')==='1')returnLink.href='/?mode=local';
 window.statementWorkState=()=>({busy,dirty:[...quantityDrafts.values()].some(d=>d.rows.size)});
 const normalized=s=>String(s||'').replaceAll('\\','/').replace(/^\.\//,'').normalize('NFC').toLowerCase();
 function notify(message,error=false){$('notice').textContent=message;$('notice').classList.toggle('warning',error);}

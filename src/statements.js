@@ -1,5 +1,5 @@
 import './statements.css';
-export function statementsView(){return `<section class="statements-module"><div class="statements-toolbar"><h1>거래명세표</h1><a class="btn secondary" href="/statements/실행.html" target="_blank" rel="noopener">별도 창으로 열기 ↗</a></div><iframe id="statements-frame" title="거래명세표 보관함 · 컴퓨터 폴더 연결" src="/statements/실행.html"></iframe></section>`;}
+export function statementsView(){return `<section class="panel"><h1>거래명세표</h1><a class="btn primary" href="/statements/실행.html?material=1">거래명세표 열기</a></section>`;}
 export function canLeaveStatements(){
  const frame=document.querySelector('#statements-frame');
  const status=frame?.contentWindow?.statementWorkState?.();

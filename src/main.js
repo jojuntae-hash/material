@@ -224,7 +224,7 @@ document.addEventListener('change',event=>{const t=event.target;if(t.matches('.a
 document.addEventListener('keydown',event=>{const t=event.target;if((event.key==='Enter'||event.key===' ')&&t.matches('[role="button"][data-action]')){event.preventDefault();t.click();}});
 document.addEventListener('click',event=>{
  if(event.target.closest('.aggregate-check'))return;
- const nav=event.target.closest('[data-view]');if(nav){event.preventDefault();view=nav.dataset.view;masterSearch='';masterTrade='';page=1;render();window.scrollTo(0,0);return;}
+ const nav=event.target.closest('[data-view]');if(nav){event.preventDefault();if(nav.dataset.view==='statements'){location.assign('/statements/실행.html?material=1'+(store.mode==='local'?'&local=1':''));return;}view=nav.dataset.view;masterSearch='';masterTrade='';page=1;render();window.scrollTo(0,0);return;}
  const el=event.target.closest('[data-action]');if(!el)return;const a=el.dataset.action,id=el.dataset.id;
  run(async()=>{
  if(a==='sort-column'){const key=el.dataset.key;setRequestSort(key,requestSort.key===key?(requestSort.direction==='asc'?'desc':'asc'):(key==='date'?'desc':'asc'));}
