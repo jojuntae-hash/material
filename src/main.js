@@ -1,4 +1,4 @@
-import {statementsView,canLeaveStatements} from './statements.js';
+import {statementsView,canLeaveStatements,attachStatements} from './statements.js';
 import {resolverForRecords,standardRecords} from './material-standard.js';
 import {quantityInput,setupQuantityInputs} from './quantity-input.js';
 import {isQueryTimeout} from './cloud-pages.js';
@@ -85,9 +85,9 @@ function shell(body){
 }
 function arrangeRequestDates(){const range=document.querySelector('.desktop-date-range'),slot=document.querySelector('.mobile-date-slot'),main=document.querySelector('#request-filter .filter-main');if(!range||!slot||!main)return;if(matchMedia('(max-width:767px)').matches)slot.append(range);else main.insertBefore(range,main.querySelector('button'));}
 function render(){
- if(view==='statements'&&document.querySelector('#statements-frame')&&(store.mode==='local'||(store.session&&store.projectId)))return;
+ if(view==='statements'&&document.querySelector('#statement-native-slot')&&(store.mode==='local'||(store.session&&store.projectId)))return;
  if(store.mode==='cloud'&&!store.session){shell('');return;}
- const fn={request:requestsView,compose:composerView,vendor:vendorsView,approval:approvalsView,settings:settingsView,aggregate:aggregateView,tools:toolsView,statements:statementsView,upload:uploadView};shell(fn[view]());if(store.recordsPartial)document.querySelectorAll('#request-filter input,#request-filter select,#request-filter button').forEach(el=>el.disabled=true);arrangeRequestDates();if(matchMedia('(max-width:767px)').matches)document.querySelector('.sidebar .nav-item.active')?.scrollIntoView({block:'nearest',inline:'center'});
+ const fn={request:requestsView,compose:composerView,vendor:vendorsView,approval:approvalsView,settings:settingsView,aggregate:aggregateView,tools:toolsView,statements:statementsView,upload:uploadView};shell(fn[view]());if(view==='statements')attachStatements();if(store.recordsPartial)document.querySelectorAll('#request-filter input,#request-filter select,#request-filter button').forEach(el=>el.disabled=true);arrangeRequestDates();if(matchMedia('(max-width:767px)').matches)document.querySelector('.sidebar .nav-item.active')?.scrollIntoView({block:'nearest',inline:'center'});
 }
 function loginScreen(){return `<div class="login-wrap"><div class="login-illustration">${icon('box')}<h1>현장의 모든 자재,<br>한 곳에서 관리하세요.</h1><p>기계·소방 청구내역과 거래처 정보를<br>PC와 휴대폰에서 함께 확인합니다.</p></div><div class="panel login-panel"><div class="eyebrow">WELCOME BACK</div><h2>공유 데이터 로그인</h2><p>Supabase에 등록된 이메일 계정으로 로그인하세요.</p><form id="login-form"><label>이메일<input type="email" name="email" autocomplete="username" required placeholder="이메일 주소"></label><label>비밀번호<input type="password" name="password" autocomplete="current-password" required minlength="6" placeholder="비밀번호"></label><button class="btn primary full" type="submit">로그인 ${icon('arrow')}</button></form><div class="notice">처음 연결할 때는 Supabase SQL Editor에서 전용 테이블 생성 SQL을 실행하고, Authentication에서 사용자를 등록해야 합니다.</div>${btn('연결 설정 확인','connection','ghost')}${import.meta.env.DEV?btn('로컬 확인 모드로 사용','local-mode','ghost'):''}</div></div>`;}
 function projectScreen(){return `<div class="panel narrow"><h1>새 현장 시작하기</h1><p>이 계정에 연결된 자재 관리 현장이 없습니다.</p><form id="project-form"><label>현장명<input name="name" value="파주 콘텐츠시티" required></label><button type="submit" class="btn primary">현장 만들기</button></form><p class="help">기존 현장에 참여하려면 현장 관리자에게 사용자 권한 등록을 요청하세요.</p></div>`;}
@@ -224,7 +224,7 @@ document.addEventListener('change',event=>{const t=event.target;if(t.matches('.a
 document.addEventListener('keydown',event=>{const t=event.target;if((event.key==='Enter'||event.key===' ')&&t.matches('[role="button"][data-action]')){event.preventDefault();t.click();}});
 document.addEventListener('click',event=>{
  if(event.target.closest('.aggregate-check'))return;
- const nav=event.target.closest('[data-view]');if(nav){event.preventDefault();if(nav.dataset.view==='statements'){location.assign('/statements/실행.html?material=1'+(store.mode==='local'?'&local=1':''));return;}view=nav.dataset.view;masterSearch='';masterTrade='';page=1;render();window.scrollTo(0,0);return;}
+ const nav=event.target.closest('[data-view]');if(nav){event.preventDefault();view=nav.dataset.view;masterSearch='';masterTrade='';page=1;render();window.scrollTo(0,0);return;}
  const el=event.target.closest('[data-action]');if(!el)return;const a=el.dataset.action,id=el.dataset.id;
  run(async()=>{
  if(a==='sort-column'){const key=el.dataset.key;setRequestSort(key,requestSort.key===key?(requestSort.direction==='asc'?'desc':'asc'):(key==='date'?'desc':'asc'));}
