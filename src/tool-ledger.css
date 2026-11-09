@@ -89,3 +89,14 @@
  .tool-receipts.tool-movements td:first-child .tool-movement-badge{padding:3px 4px}
  .tool-receipts.tool-movements .tool-receipt-quantity span{font-size:10px}
 }
+/* Keep desktop management controls on one line; mobile uses its dedicated menu. */
+@media(min-width:768px){
+ html body .tool-registered .tool-table td:last-child>.tool-mobile-manage{display:none!important}
+ html body .tool-registered .tool-row-actions{display:flex;flex-wrap:nowrap;align-items:center;gap:4px;white-space:nowrap}
+ html body .tool-registered .tool-row-actions>.btn{flex:0 0 auto;white-space:nowrap;word-break:keep-all;padding:4px 7px;min-height:32px}
+ html body .tool-registered .tool-table tr>:last-child{min-width:355px;width:355px}
+ html body .tool-movements tr>:last-child{min-width:126px;width:126px}
+ html body .tool-movements .tool-movement-actions{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:5px;white-space:nowrap}
+ html body .tool-movements .tool-movement-actions>.btn{flex:0 0 auto;white-space:nowrap;word-break:keep-all;min-height:32px;padding:5px 8px}
+}
+html body .tool-movement-actions>.btn{white-space:nowrap;word-break:keep-all}
