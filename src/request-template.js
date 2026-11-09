@@ -37,7 +37,7 @@ export function mergeDraftRows(rows){
  return [...groups.values()].map(g=>{
   const result={...g.row,quantity:g.quantity};
   for(const [field,values] of Object.entries(g.values))result[field]=field==='unit'?(values.size>1?'EA':[...values.values()][0]||''):[...values.values()].join(' / ');
-  if(g.count>1&&g.applicants.size){const unit=!result.unit||norm(result.unit)==='EA'?'개':result.unit;const breakdown=[...g.applicants.values()].map(a=>`${a.name} ${a.quantity}${unit}`).join(' / ');result.note=[result.note,breakdown].filter(Boolean).join(', ');}
+  if(g.count>1&&g.applicants.size>1){const unit=!result.unit||norm(result.unit)==='EA'?'개':result.unit;const breakdown=[...g.applicants.values()].map(a=>`${a.name} ${a.quantity}${unit}`).join(' / ');result.note=[result.note,breakdown].filter(Boolean).join(', ');}
   return result;
  });
 }

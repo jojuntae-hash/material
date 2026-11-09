@@ -100,9 +100,15 @@ test('이전 W열 메모 양식도 읽을 수 있다',()=>{const d=draft(),wb=XL
  const rows=[base,{...base,quantity:3,applicant:'임종한 부장',note:''},{...base,quantity:1,applicant:'김광회 차장'},{...base,quantity:4,applicant:''},{...base,trade:'소방',quantity:7}];
  const before=JSON.stringify(rows),merged=mergeDraftRows(rows);
  assert.equal(merged[0].note,'긴급, 김광회차장 3개 / 임종한 부장 3개');assert.equal(merged[0].quantity,10);assert.equal(merged[1].note,'긴급');assert.equal(JSON.stringify(rows),before);
- assert.equal(mergeDraftRows([{...base,note:''},{...base,note:''}])[0].note,'김광회차장 4개');
- assert.equal(mergeDraftRows([{...base,unit:'M'},{...base,unit:'M',quantity:.5}])[0].note,'긴급, 김광회차장 2.5M');
+ assert.equal(mergeDraftRows([{...base,note:''},{...base,note:''}])[0].note,'');
+ assert.equal(mergeDraftRows([{...base,unit:'M'},{...base,unit:'M',quantity:.5}])[0].note,'긴급');
  const d={...draft(),mergeItems:true,rows:rows.slice(0,2)},wb=XLSX.read(fillRequestTemplate(template,d)),sheet=wb.Sheets[wb.SheetNames[0]];
  assert.equal(sheet.X12.v,'긴급, 김광회차장 2개 / 임종한 부장 3개');assert.equal(parseDraftSheet(wb,'작성 상세내역').rows[0].note,'긴급');
  const plain=XLSX.read(fillRequestTemplate(template,{...d,mergeItems:false}));assert.equal(plain.Sheets[plain.SheetNames[0]].X12.v,'긴급');
+ });
+
+ test('같은 신청자의 공백 표기 차이는 합산 메모에 수량을 추가하지 않는다',()=>{
+ const a={name:'엘보',spec:'25A',unit:'EA',trade:'기계',quantity:2,applicant:'임종한 차장',note:'기존 메모'};
+ const result=mergeDraftRows([a,{...a,applicant:'임종한차장',quantity:5}])[0];
+ assert.equal(result.quantity,7);assert.equal(result.note,'기존 메모');
  });
