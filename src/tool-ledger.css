@@ -100,3 +100,5 @@
  html body .tool-movements .tool-movement-actions>.btn{flex:0 0 auto;white-space:nowrap;word-break:keep-all;min-height:32px;padding:5px 8px}
 }
 html body .tool-movement-actions>.btn{white-space:nowrap;word-break:keep-all}
+.tool-audit-entry{padding:10px 0;border-bottom:1px solid var(--line,#dce5e8)}.tool-audit-entry p{margin:5px 0;line-height:1.6}
+.tool-accessories{border:1px solid var(--line,#dce5e8);border-radius:8px;padding:12px;margin:12px 0}.tool-accessories>b{display:block;margin-bottom:9px}.tool-accessory-reference{padding:10px 0;font-size:13px}.tool-accessory-reference p{margin:7px 0}.tool-accessory-reference small{color:#70838a}

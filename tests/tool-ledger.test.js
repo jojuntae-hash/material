@@ -19,3 +19,12 @@ test('수정은 원본·취소 이력을 보존하고 후속 기록과 함께 �
 test('날짜별 입고는 최신순이며 지급·반납·취소·삭제 항목 제외',async()=>{const {toolReceiptDays,editToolEvent}=await import('../src/tool-ledger-core.js');let a=addToolEvent(base(),event('1','receive',5,'','2026-10-27'));a=addToolEvent(a,event('2','receive',2,'','2026-10-29'));a=addToolEvent(a,event('3','issue',1,'김','2026-10-29'));a=editToolEvent(a,'2',event('4','receive',3,'','2026-10-28'),{id:'5',type:'cancel',eventId:'2',reason:'날짜 정정'});const rows=[{id:'a',kind:'batch',data:a},{id:'b',kind:'batch',data:{...addToolEvent(base(),event('6','receive',1,'','2026-10-28')),name:'그라인더'}},{id:'c',kind:'batch',data:{...a,archived:true}},{id:'d',kind:'batch',deleted:true,data:a},{id:'e',kind:'request',data:{}}];const before=JSON.stringify(rows),days=toolReceiptDays(rows);assert.deepEqual(days.map(x=>x.date),['2026-10-28','2026-10-27']);assert.equal(days[0].rows.length,2);assert.equal(days[0].rows.find(x=>x.toolId==='a').quantity,3);assert.equal(days.flatMap(x=>x.rows).some(x=>x.eventId==='2'||x.eventId==='3'),false);assert.equal(JSON.stringify(rows),before);assert.deepEqual(toolReceiptDays([]),[]);});
 
 test('사진 개수·용량·외부 URL 검증',()=>{const photo={name:'사진.jpg',url:'data:image/jpeg;base64,YQ=='};assert.doesNotThrow(()=>toolSummary({...base(),photos:[photo]}));assert.throws(()=>toolSummary({...base(),photos:Array(9).fill(photo)}),/사진/);assert.throws(()=>toolSummary({...base(),photos:[{...photo,url:'javascript:alert(1)'}]}),/사진/);assert.throws(()=>toolSummary({...base(),photos:[{...photo,url:'data:image/jpeg;base64,'+'a'.repeat(4*1024*1024)}]}),/사진/);});
+
+ test('동봉 배터리·충전기 개수는 재고와 무관하며 취소 후 일반 기록에서 제외',()=>{
+ const base={name:'드릴',events:[{id:'r',type:'receive',date:'2026-11-16',quantity:1}]};
+ const issue={id:'i',type:'issue',date:'2026-11-16',quantity:1,person:'시험자',batteryCount:2,chargerCount:1};
+ const data=addToolEvent(base,issue);assert.equal(toolSummary(data).stock,0);assert.equal(toolSummary(data).active[1].batteryCount,2);
+ for(const batteryCount of [-1,1.5,NaN])assert.throws(()=>addToolEvent(base,{...issue,batteryCount}));
+ const cancelled=addToolEvent(data,{id:'c',type:'cancel',eventId:'i',reason:'잘못 입력'});
+ assert.equal(toolSummary(cancelled).active.length,1);assert.equal(cancelled.events[1].chargerCount,1);
+ });

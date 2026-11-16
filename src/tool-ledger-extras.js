@@ -15,8 +15,8 @@ export function moveToolOps(records,id,direction){
 export function buildToolWorkbook(records){
  const rows=orderedTools(records),wb=XLSX.utils.book_new();
  const list=[['순서','품명','규격','단위','현장 입고','지급중','현재 보유','최근 입고일','현재 수령자 / 수량','사진 수']];
- const logs=[['품명','규격','단위','날짜','종류','수량','수령자','메모','사진 수']];
- for(const r of rows){const d=r.data,s=toolSummary(d);list.push([list.length,d.name,d.spec||'',d.unit||'',s.received,s.issued-s.returned,s.stock,s.lastReceived,s.holders.map(h=>`${h.person} ${h.quantity}`).join(' / '),(d.photos||[]).length+s.active.reduce((count,event)=>count+(event.photos||[]).length,0)]);for(const x of s.active)logs.push([d.name,d.spec||'',d.unit||'',x.date,{receive:'입고',issue:'지급',return:'반납'}[x.type],x.quantity,x.person||'',x.note||'',(x.photos||[]).length]);}
+ const logs=[['품명','규격','단위','날짜','종류','수량','수령자','메모','사진 수','함께 지급 배터리','함께 지급 충전기']];
+ for(const r of rows){const d=r.data,s=toolSummary(d);list.push([list.length,d.name,d.spec||'',d.unit||'',s.received,s.issued-s.returned,s.stock,s.lastReceived,s.holders.map(h=>`${h.person} ${h.quantity}`).join(' / '),(d.photos||[]).length+s.active.reduce((count,event)=>count+(event.photos||[]).length,0)]);for(const x of s.active)logs.push([d.name,d.spec||'',d.unit||'',x.date,{receive:'입고',issue:'지급',return:'반납'}[x.type],x.quantity,x.person||'',x.note||'',(x.photos||[]).length,x.batteryCount||0,x.chargerCount||0]);}
  for(const [name,data] of [['등록 공도구',list],['입출고 기록',logs]]){const ws=XLSX.utils.aoa_to_sheet(data);ws['!cols']=data[0].map((_,i)=>({wch:i===0?14:i===1?28:20}));ws['!autofilter']={ref:ws['!ref']};XLSX.utils.book_append_sheet(wb,ws,name);}return wb;
 }
 
