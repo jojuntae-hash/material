@@ -80,3 +80,9 @@ html[data-theme=block] .nav-item.active:is(:hover,:focus-visible){background:#f2
 .composer-list-row{grid-template-columns:minmax(0,1fr) auto auto auto!important}.composer-list-order{display:flex;gap:3px}.composer-list-order .btn{padding:2px 5px!important;min-width:25px;min-height:30px!important;height:30px}.composer-list-row>input{min-width:0}.composer-list-row[hidden]{display:none}
 @media(max-width:400px){.composer-list-row{gap:3px}.composer-list-row>.btn{padding:3px 5px!important}.composer-list-order .btn{min-width:23px;padding:2px 4px!important}}
 .standard-unregistered{margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px}.standard-unregistered summary{cursor:pointer;font-weight:600}.standard-unregistered-list{max-height:300px;overflow:auto}.standard-unregistered-list>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}.standard-unregistered-list>div>span{min-width:0;overflow-wrap:anywhere}.standard-unregistered-list .btn{flex-shrink:0}.standard-extra-aliases{grid-column:1/-1}.name-rule-editing textarea{min-width:160px;width:100%;font:inherit}.name-rule-table td small{display:block;white-space:normal}
+/* Dedicated handles keep text inputs editable during list reordering. */
+.composer-list-row:has(.composer-list-drag){grid-template-columns:26px minmax(0,1fr) auto auto auto!important}
+.composer-list-drag{border:0;background:transparent;color:#60818b;cursor:grab;touch-action:none;padding:0;font-size:22px;align-self:center;min-height:32px;border-radius:4px}
+.composer-list-drag:focus-visible{outline:2px solid var(--accent,#178387)}
+.list-drag-source{opacity:.4}.list-drop-before{box-shadow:inset 0 3px #178387}.list-drop-after{box-shadow:inset 0 -3px #178387}
+.list-drag-active,.list-drag-active *{cursor:grabbing!important;user-select:none!important}
