@@ -1,3 +1,4 @@
+import {setupDateEntries} from './date-entry.js';
 import {mountStatementApp} from './statement-library/app.js';
 import template from './statement-library/template.html?raw';
 import styles from './statement-library/native.css?inline';
@@ -16,7 +17,7 @@ export function attachStatements(){
   const library=root.getElementById('library'),aside=library.querySelector('aside');
   const groups=document.createElement('details');groups.className='native-groups';const caption=document.createElement('summary');caption.textContent='거래처 · 관리폴더 분류';groups.append(caption,aside);library.querySelector('.results').prepend(groups);
   const fit=document.createElement('button');fit.id='fitImageButton';fit.textContent='전체 보기';fit.type='button';root.querySelector('.image-tools').prepend(fit);
-  engine=mountStatementApp(root);
+  engine=mountStatementApp(root);setupDateEntries(root);
  }
  slot.append(host);
 }

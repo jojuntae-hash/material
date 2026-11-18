@@ -1,3 +1,4 @@
+import {setupDateEntries} from './date-entry.js';
 import {statementsView,canLeaveStatements,attachStatements} from './statements.js';
 import {resolverForRecords,standardRecords} from './material-standard.js';
 import {quantityInput,setupQuantityInputs} from './quantity-input.js';
@@ -414,3 +415,5 @@ document.addEventListener('input',event=>{if(!event.target.matches('.cancelled-s
 
 
 
+
+setupDateEntries();
