@@ -41,7 +41,7 @@
  html[data-theme] body .composer-table th:nth-child(1){width:26px}
  html[data-theme] body .composer-table th:nth-child(2){width:56px}
  html[data-theme] body .composer-table th:nth-child(3){width:19%}
- html[data-theme] body .composer-table th:nth-child(4){width:40px}
+ html[data-theme] body .composer-table th:nth-child(4){width:72px}
  html[data-theme] body .composer-table th:nth-child(5){width:56px}
  html[data-theme] body .composer-table th:nth-child(6){width:10%}
  html[data-theme] body .composer-table th:nth-child(7){width:23%}
@@ -63,3 +63,6 @@
  .composer-search .composer-result-count{margin:8px 0}
  .composer-search .composer-result{padding:8px 0}
 }
+
+/* Keep unit text visible beside the native datalist arrow. */
+html body .composer-table input[data-field="unit"]{min-width:60px;padding-left:5px;padding-right:5px}
