@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {toolSummary,addToolEvent,toolReceiptRows,toolMovementRows,toolPeople} from '../src/tool-ledger-core.js';
-import {orderedTools,nextToolOrder,moveToolOps,buildToolWorkbook} from '../src/tool-ledger-extras.js';
+import {orderedTools,nextToolOrder,moveToolOps,reorderToolOps,buildToolWorkbook} from '../src/tool-ledger-extras.js';
 import * as XLSX from 'xlsx';
 const base=()=>({type:'tool-ledger',name:'충전드릴',spec:'18V',unit:'EA',events:[]});
 const event=(id,type,quantity,person='',date='2026-10-27')=>({id,type,quantity,person,date});
@@ -28,3 +28,12 @@ test('사진 개수·용량·외부 URL 검증',()=>{const photo={name:'사진.j
  const cancelled=addToolEvent(data,{id:'c',type:'cancel',eventId:'i',reason:'잘못 입력'});
  assert.equal(toolSummary(cancelled).active.length,1);assert.equal(cancelled.events[1].chargerCount,1);
  });
+
+test('드래그 순서는 여러 행을 넘어 이동하고 원본·버전·공구 기록을 보존',()=>{
+ const rows=['a','b','c','d'].map((id,order)=>({id,version:7,kind:'batch',data:{...base(),order}}));
+ const apply=ops=>orderedTools(rows.map(r=>ops.find(o=>o.id===r.id)||r)).map(r=>r.id);
+ assert.deepEqual(apply(reorderToolOps(rows,'a','d',true)),['b','c','d','a']);
+ assert.deepEqual(apply(reorderToolOps(rows,'d','a')),['d','a','b','c']);
+ assert.deepEqual(reorderToolOps(rows,'a','a'),[]);assert.deepEqual(reorderToolOps(rows,'none','b'),[]);
+ assert.equal(rows[0].data.order,0);assert.ok(reorderToolOps(rows,'a','d',true).every(r=>r.version===7&&r.data.name==='충전드릴'));
+});

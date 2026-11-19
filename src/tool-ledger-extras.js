@@ -13,6 +13,12 @@ export function moveToolOps(records,id,direction){
  [rows[i],rows[j]]=[rows[j],rows[i]];
  return rows.flatMap((r,index)=>r.data.order===index?[]:[{id:r.id,kind:'batch',version:r.version,deleted:false,data:{...r.data,order:index}}]);
 }
+export function reorderToolOps(records,id,targetId,after=false){
+ const rows=orderedTools(records),from=rows.findIndex(r=>r.id===id);
+ if(from<0||id===targetId||!rows.some(r=>r.id===targetId))return [];
+ const [moved]=rows.splice(from,1),to=rows.findIndex(r=>r.id===targetId)+(after?1:0);rows.splice(to,0,moved);
+ return rows.flatMap((r,index)=>r.data.order===index?[]:[{id:r.id,kind:'batch',version:r.version,deleted:false,data:{...r.data,order:index}}]);
+}
 export function buildToolWorkbook(records){
  const rows=orderedTools(records),wb=XLSX.utils.book_new();
  const list=[['순서','품명','규격','단위','현장 입고','지급중','현재 보유','최근 입고일','현재 수령자 / 수량','사진 수','소유 구분']];
